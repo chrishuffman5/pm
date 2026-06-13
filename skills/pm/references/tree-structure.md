@@ -191,6 +191,8 @@ pwsh -NoProfile -File pm/build-pm-html.ps1 -Path <repo>/pm -ProjectName "<Projec
 ```
 `-ProjectName` sets the brand/title shown across all pages; `-Lede` sets the portfolio subtitle. Both fall back sensibly (repo folder name / generic tagline) if omitted.
 
+Every page footer carries a link back to the repository so a visitor on a published GitHub Pages site can jump to the README and plugin-install instructions. The URL is auto-detected from `git remote origin` (SSH/HTTPS remotes are normalized to an `https://…` URL); pass `-RepoUrl <url>` to override, or it's omitted when there's no remote.
+
 The companion `set-status.ps1` (also installed into `pm/` by `pm init`) is the preferred way to change a node's status: it rewrites `Status:`, bumps `Last updated:`, appends the timestamped `## Status log` entry, and regenerates the HTML in one call — see "Status log" above.
 
 ## File-count verification

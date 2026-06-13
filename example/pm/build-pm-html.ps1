@@ -29,6 +29,12 @@
   One-line subtitle shown under the portfolio heading on index.html. If omitted, a generic
   tagline is used.
 
+.PARAMETER RepoUrl
+  Repository URL linked in every page footer, so a visitor on the published GitHub Pages site
+  can jump to the repo (its README and plugin-install instructions). If omitted, it is
+  auto-detected from `git remote origin` (SSH and HTTPS remotes are normalized to an https URL).
+  If there is no git remote, the footer link is simply omitted.
+
 .EXAMPLE
   pwsh build-pm-html.ps1 -Path C:\repo\pm -ProjectName "landfinder" -Lede "Daily land scanner for Middle TN."
 .EXAMPLE
@@ -38,7 +44,8 @@
 param(
     [string]$Path,
     [string]$ProjectName,
-    [string]$Lede
+    [string]$Lede,
+    [string]$RepoUrl
 )
 
 $ErrorActionPreference = 'Stop'
@@ -58,6 +65,26 @@ function Resolve-PmRoot([string]$p) {
     throw "Could not locate a pm root (a folder containing E<NNN> epic dirs). Pass -Path <repo>/pm."
 }
 $pmDir = Resolve-PmRoot $Path
+
+# Repo link for the page footer. So a visitor on the published GitHub Pages site can jump back to
+# the repo (README + plugin install instructions). Auto-detected from git unless -RepoUrl is given.
+function ConvertTo-WebRepoUrl([string]$u) {
+    if (-not $u) { return $null }
+    $u = $u.Trim()
+    if ($u -match '^git@([^:]+):(.+?)(?:\.git)?/?$') { return "https://$($Matches[1])/$($Matches[2])" }   # git@host:owner/repo.git
+    if ($u -match '^ssh://[^@]+@([^/]+)/(.+?)(?:\.git)?/?$') { return "https://$($Matches[1])/$($Matches[2])" }  # ssh://git@host/owner/repo.git
+    return ($u -replace '\.git/?$', '')   # https://host/owner/repo(.git)
+}
+if (-not $RepoUrl) {
+    try {
+        $origin = (& git -C $pmDir config --get remote.origin.url 2>$null)
+        if ($LASTEXITCODE -eq 0 -and $origin) { $RepoUrl = ConvertTo-WebRepoUrl $origin }
+    }
+    catch { $RepoUrl = $null }   # git absent or not a repo — footer link is simply omitted
+}
+else { $RepoUrl = ConvertTo-WebRepoUrl $RepoUrl }
+# Display label: the owner/repo path (host-agnostic), falling back to the bare URL.
+$RepoLabel = if ($RepoUrl -match '^https?://[^/]+/(.+)$') { $Matches[1] } else { $RepoUrl }
 
 # Project branding: default to the repo folder name (parent of the pm root) and a generic lede.
 if (-not $ProjectName) {
@@ -362,6 +389,12 @@ function Write-Html([string]$file, [string]$html) {
 function Page([string]$pageTitle, [string]$crumbHtml, [string]$bodyHtml) {
     $brand = [System.Net.WebUtility]::HtmlEncode($ProjectName)
     $legend = '<div class="legend"><span><i class="i-done"></i>Done</span><span><i class="i-wip"></i>In&nbsp;progress</span><span><i class="i-todo"></i>Not&nbsp;started</span></div>'
+    $repo = ''
+    if ($RepoUrl) {
+        $href = [System.Net.WebUtility]::HtmlEncode($RepoUrl)
+        $label = [System.Net.WebUtility]::HtmlEncode($RepoLabel)
+        $repo = " &middot; <a class=`"repolink`" href=`"$href`" title=`"Repository — README, skill docs &amp; plugin install instructions`">$label &#8599;</a>"
+    }
     @"
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -372,7 +405,7 @@ $FontLink
 <div class="topbar"><div class="wrap"><span class="brand">$brand<span class="sp">//</span></span><nav class="crumb">$crumbHtml</nav></div></div>
 <div class="wrap">
 $bodyHtml
-<div class="foot"><span>$brand pm tracker &middot; generated from CLAUDE.md</span>$legend</div>
+<div class="foot"><span>$brand pm tracker &middot; generated from CLAUDE.md$repo</span>$legend</div>
 </div></body></html>
 "@
 }
