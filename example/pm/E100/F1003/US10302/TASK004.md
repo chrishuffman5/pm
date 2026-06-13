@@ -17,9 +17,9 @@ dashboard and a `.nojekyll` marker so Pages serves the static files verbatim.
 - `.nojekyll` prevents Pages from running the Jekyll pipeline over the static HTML.
 
 ## Acceptance criteria
-- [ ] a root `index.html` redirects to the example dashboard
-- [ ] `.nojekyll` exists at the served root
-- [ ] the static HTML is served unmodified (no Jekyll transformation)
+- [x] a root `index.html` redirects to the example dashboard
+- [x] `.nojekyll` exists at the served root
+- [x] the static HTML is served unmodified (no Jekyll transformation)
 
 ## Out of scope
 - Turning on the Pages site itself (TASK005).

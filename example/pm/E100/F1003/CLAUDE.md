@@ -39,7 +39,7 @@ finally flipping the public repo on and verifying the marketplace install path.
 ## Stories
 - US10300 — Skill-invocation test harness — Status: Done
 - US10301 — Agent-driven mode-dispatch tests — Status: Done
-- US10302 — Example project + GitHub Pages dashboard — Status: In progress
+- US10302 — Example project + GitHub Pages dashboard — Status: Done
 - US10303 — Description-trigger optimization — Status: Not started
 - US10304 — Publish public repo + marketplace listing — Status: Not started
 
