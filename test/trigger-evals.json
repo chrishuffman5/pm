@@ -1,0 +1,34 @@
+{
+  "skill": "pm",
+  "notes": "Trigger-optimization eval set. should_trigger=true => the pm skill should be invoked; false => a near-miss that shares keywords (plan/init/scaffold/execute/groom/epic/story/dashboard/PM) but must NOT trigger. 'queries' is the base set (easy near-misses); 'hard_queries' are adversarial cases that reuse the skill's own literal trigger phrases (I'm the pm, groom the backlog, act as project manager, update status fields, worktree, scaffold the epic) in generic/non-pm-tree contexts to probe over-triggering.",
+  "queries": [
+    { "id": 1,  "should_trigger": true,  "mode": "init",    "query": "can you set up a pm tree for my new CLI tool? a couple of features with some user stories under each, and tasks" },
+    { "id": 2,  "should_trigger": true,  "mode": "execute", "query": "act as the pm for F1004 and start working through its stories - claim them and run the tasks" },
+    { "id": 3,  "should_trigger": true,  "mode": "plan",    "query": "the auth feature in my pm/E100 tree got too big. split it into two features and fix the dependencies" },
+    { "id": 4,  "should_trigger": true,  "mode": "plan",    "query": "/pm plan groom the backlog - a few stories are stale and a couple need re-prioritizing for the next phase" },
+    { "id": 5,  "should_trigger": true,  "mode": "execute", "query": "I want to claim US10402 and knock out its tasks, ticking the acceptance criteria as I go" },
+    { "id": 6,  "should_trigger": true,  "mode": "init",    "query": "bootstrap the rally hierarchy for this repo - epic, features, user stories and tasks as CLAUDE.md files with a PLAN.md" },
+    { "id": 7,  "should_trigger": true,  "mode": "execute", "query": "tick the acceptance criteria on the story I just finished and bump its status to Done in the pm tree" },
+    { "id": 8,  "should_trigger": true,  "mode": "execute", "query": "spin up a git worktree for the next story and have a worker agent build it out end to end" },
+    { "id": 9,  "should_trigger": true,  "mode": "plan",    "query": "review my epic's features and re-decompose F1002 into smaller stories; tighten the acceptance criteria" },
+    { "id": 10, "should_trigger": false, "mode": null,      "query": "help me plan my week and make a prioritized to-do list for today" },
+    { "id": 11, "should_trigger": false, "mode": null,      "query": "init a new npm project with typescript and eslint configured" },
+    { "id": 12, "should_trigger": false, "mode": null,      "query": "I'm the project manager for our marketing launch - draft a status update for stakeholders" },
+    { "id": 13, "should_trigger": false, "mode": null,      "query": "create a Jira epic with a few stories for the new checkout feature" },
+    { "id": 14, "should_trigger": false, "mode": null,      "query": "build an HTML dashboard that visualizes our quarterly sales numbers" },
+    { "id": 15, "should_trigger": false, "mode": null,      "query": "execute this SQL migration task and then run the python backfill script after it" },
+    { "id": 16, "should_trigger": false, "mode": null,      "query": "scaffold a React app with a components folder, routing, and a tasks page" },
+    { "id": 17, "should_trigger": false, "mode": null,      "query": "plan the database schema for the orders service and its relationships" },
+    { "id": 18, "should_trigger": false, "mode": null,      "query": "groom this dataset and re-prioritize the cleaning steps before we train the model" }
+  ],
+  "hard_queries": [
+    { "id": "H1", "should_trigger": false, "query": "act as project manager for my team and help me prioritize our product roadmap" },
+    { "id": "H2", "should_trigger": false, "query": "I'm the pm on this project - help me write up sprint goals and assign owners" },
+    { "id": "H3", "should_trigger": false, "query": "scaffold the epic and its stories for our Q3 roadmap as a Google Doc" },
+    { "id": "H4", "should_trigger": false, "query": "groom the backlog with our scrum team before this sprint's planning meeting" },
+    { "id": "H5", "should_trigger": false, "query": "update the status fields on my project tracker spreadsheet" },
+    { "id": "H6", "should_trigger": false, "query": "set up a git worktree for my feature branch so I can build in parallel" },
+    { "id": "H7", "should_trigger": true,  "query": "the tree under pm/E200 needs a billing feature - add it with a few stories and tasks" },
+    { "id": "H8", "should_trigger": true,  "query": "I track each story as a CLAUDE.md file in the repo; pick up the next story and finish its tasks" }
+  ]
+}

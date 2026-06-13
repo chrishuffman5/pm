@@ -18,9 +18,9 @@ and should-not precision, to find the wording that maximizes correct triggering.
 - Track both false negatives (missed triggers) and false positives (spurious triggers).
 
 ## Acceptance criteria
-- [ ] candidate descriptions are scored against the full eval set
-- [ ] both recall and precision are measured per candidate
-- [ ] the best-scoring candidate is identified and recorded
+- [x] candidate descriptions are scored against the full eval set
+- [x] both recall and precision are measured per candidate
+- [x] the best-scoring candidate is identified and recorded
 
 ## Out of scope
 - Committing the winner into the skill (TASK003).

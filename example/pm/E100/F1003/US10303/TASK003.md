@@ -17,9 +17,9 @@ across all three modes.
 - Re-run the eval set one final time to confirm the applied description scores as expected.
 
 ## Acceptance criteria
-- [ ] the optimized description is set in `skills/pm/SKILL.md`
-- [ ] it covers scaffold / refine / execute phrasings
-- [ ] a final eval run confirms the applied description's accuracy
+- [x] the optimized description is set in `skills/pm/SKILL.md`
+- [x] it covers scaffold / refine / execute phrasings
+- [x] a final eval run confirms the applied description's accuracy
 
 ## Out of scope
 - Further wording iterations beyond the chosen winner.

@@ -1,6 +1,6 @@
 # F1003 — Validation & open-source release
 **Phase:** 3
-**Status:** In progress
+**Status:** Done
 **Depends on:** F1001, F1002
 **Last updated:** 2026-06-13
 
@@ -33,14 +33,14 @@ finally flipping the public repo on and verifying the marketplace install path.
 ## Acceptance criteria (feature-level)
 - [x] test harness exists
 - [x] agent dispatch tests pass
-- [ ] description optimized
+- [x] description optimized
 - [x] public repo published
 
 ## Stories
 - US10300 — Skill-invocation test harness — Status: Done
 - US10301 — Agent-driven mode-dispatch tests — Status: Done
 - US10302 — Example project + GitHub Pages dashboard — Status: Done
-- US10303 — Description-trigger optimization — Status: Not started
+- US10303 — Description-trigger optimization — Status: Done
 - US10304 — Publish public repo + marketplace listing — Status: Done
 
 ## Key design notes
@@ -60,3 +60,4 @@ finally flipping the public repo on and verifying the marketplace install path.
 ## Status log
 - 2026-06-12T16:10Z — Created
 - 2026-06-13T09:00Z — In progress
+- 2026-06-13T18:07Z — Done — all 5 stories complete

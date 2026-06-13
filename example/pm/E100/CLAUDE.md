@@ -1,5 +1,5 @@
 # E100 — Build and open-source the `pm` skill
-**Status:** In progress
+**Status:** Done
 **Last updated:** 2026-06-13
 
 > **You are inside the Rally hierarchy for the `pm` skill's own development.** Design intent is
@@ -60,6 +60,7 @@ E100/
 
 ## Status log
 - YYYY-MM-DDTHH:MMZ — Created
+- 2026-06-13T18:07Z — Done — all 4 features complete — pm skill built and shipped
 ```
 
 ### Story `CLAUDE.md`

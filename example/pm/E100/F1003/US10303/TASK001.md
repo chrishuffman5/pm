@@ -17,9 +17,9 @@ modes' phrasings) and prompts that *should not*, to measure trigger accuracy obj
   to catch false positives.
 
 ## Acceptance criteria
-- [ ] a labeled should-fire set covers all three modes' phrasings
-- [ ] a should-not set includes plausible false-positive prompts
-- [ ] the set is machine-readable for the optimization loop
+- [x] a labeled should-fire set covers all three modes' phrasings
+- [x] a should-not set includes plausible false-positive prompts
+- [x] the set is machine-readable for the optimization loop
 
 ## Out of scope
 - Running the loop (TASK002) and applying the result (TASK003).
