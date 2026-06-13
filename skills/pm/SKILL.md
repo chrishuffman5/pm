@@ -1,17 +1,19 @@
 ---
 name: pm
-description: Workflow for the Rally-style PM tree at pm/E100/ in the landfinder repo (Epic → Feature → User Story → Task). Use this skill whenever an agent is asked to work on a feature (F1xxx), pick up a user story (US1xxxx), execute a task (TASK[NNN]), act as project manager for a feature, delegate user stories to worker agents, update status fields or tick acceptance-criteria checkboxes in pm/E100/, create or merge git worktrees for parallel story work, surface blockers up to a project manager, or coordinate handoffs between agents working on the same feature. Trigger even when the user only mentions "PM tree", "worktree for a story", "tick the checkboxes", "claim a story", or "I'm the pm" — those are signals you should follow this skill rather than improvise.
+description: Execution workflow for a Rally-style PM tree at pm/E<NNN>/ (Epic → Feature → User Story → Task) — spawning and coordinating a team of agents to build it out. Use this skill whenever an agent is asked to work on a feature (F1xxx), pick up a user story (US1xxxx), execute a task (TASK[NNN]), act as project manager for a feature, delegate user stories to worker agents, update status fields or tick acceptance-criteria checkboxes in pm/E<NNN>/, create or merge git worktrees for parallel story work, surface blockers up to a project manager, or coordinate handoffs between agents working on the same feature. Trigger even when the user only mentions "PM tree", "worktree for a story", "tick the checkboxes", "claim a story", or "I'm the pm" — those are signals you should follow this skill rather than improvise. This is the build-it-out skill; to scaffold a tree that doesn't exist yet use pm-init, and to refine an existing tree in a planning session use pm-plan.
 ---
 
-# pm — Working the landfinder PM tree
+# pm — Executing a PM tree with a team of agents
 
-Activate this skill any time you're working with `pm/E100/` in this repo. The tree implements a Rally hierarchy (Epic → Feature → User Story → Task) with two roles: a long-running **PM agent** that owns a Feature, and short-lived **Worker agents** that each own one User Story.
+Activate this skill any time you're building out an existing `pm/E<NNN>/` tree. It implements a Rally hierarchy (Epic → Feature → User Story → Task) with two roles: a long-running **PM agent** that owns a Feature, and short-lived **Worker agents** that each own one User Story.
+
+This skill is for *execution*. If the tree doesn't exist yet, scaffold it with **pm-init** first. If the plan needs reshaping (split stories, fix dependencies, re-phase), do that with **pm-plan** before executing. Once a PM starts coding instead of delegating, it has lost the plot.
 
 ## What this skill assumes you already know
 
 The hierarchy, file templates, numbering scheme, and the cross-feature "working agreement" are documented in:
 
-- `pm/E100/CLAUDE.md` — epic charter with the **exact templates** for Feature/Story/Task files. Read this once at the start of any PM-tree session; do not reconstruct the templates from memory.
+- `pm/E<NNN>/CLAUDE.md` — epic charter with the **exact templates** for Feature/Story/Task files (`E100` in most projects). Read this once at the start of any PM-tree session; do not reconstruct the templates from memory.
 - `PLAN.md` (repo root) — the phase + dependency graph across all features.
 
 This skill adds what those files do *not* cover: the **runtime workflow** — how PMs and Workers actually coordinate, how worktrees are managed per story, and how status discipline is enforced.
@@ -20,7 +22,7 @@ This skill adds what those files do *not* cover: the **runtime workflow** — ho
 
 ### PM (Project Manager) — owns one Feature `F1xxx`
 
-A PM is a **long-running Opus 4.7 agent** that:
+A PM is a **long-running Opus 4.8 agent** that:
 
 1. Reads its feature's `pm/E100/F1xxx/CLAUDE.md` in full and confirms feature-level dependencies (`Depends on:`) are `Done`.
 2. Iterates through its stories in dependency-respecting order. For each story:
@@ -75,12 +77,18 @@ Assumptions:
    - For each F-ID on the Depends on: line, confirm that feature's Status: is Done.
    - If not, stop and report — the work is blocked.
 
-3. Bump feature Status: to "In progress" and Last updated: to today.
+3. Set feature Status: to "In progress" — run:
+   pwsh -NoProfile -File pm/set-status.ps1 -Path pm/E<NNN>/F1xxx/CLAUDE.md -Status "In progress"
+   (this stamps the timestamped Status log entry, bumps Last updated, and regenerates the HTML).
 
 4. Loop over stories in dependency order:
    a. Pick the next story whose Depends on: lines are all Done.
    b. Create the worktree + branch (references/worktree.md).
-   c. Spawn a Worker (via Agent tool, or SendMessage if continuing a named worker).
+   c. Read the story's **Model:** line and spawn the Worker on that model — pass it as the
+      Agent tool's `model` parameter (e.g. claude-sonnet-4-6 or claude-opus-4-8). If the story
+      has no Model: line, default to claude-sonnet-4-6. The model is chosen per story at plan
+      time (pm-init / pm-plan) precisely so the PM doesn't have to judge complexity at spawn
+      time — honor it. Spawn via the Agent tool (or SendMessage if continuing a named worker).
       The brief MUST include:
         - The story ID (US1xxxx) and the absolute path to its folder.
         - The absolute path to the worktree it must work in.
@@ -94,7 +102,8 @@ Assumptions:
    h. Tear down: remove the worktree, delete the branch locally and remotely.
 
 5. When every story in the feature is Done:
-   - Bump feature Status: to Done and Last updated:.
+   - Set feature Status: to Done — run:
+     pwsh -NoProfile -File pm/set-status.ps1 -Path pm/E<NNN>/F1xxx/CLAUDE.md -Status "Done" -Note "<what closed it>"
    - Report up to the human with a one-paragraph summary.
 ```
 
@@ -113,15 +122,21 @@ Assumptions:
    - See references/worktree.md.
    - cd into the worktree; work there exclusively.
 
-4. Bump story Status: to "In progress" and Last updated: to today.
+4. Set story Status: to "In progress" — run:
+   pwsh -NoProfile -File pm/set-status.ps1 -Path pm/E<NNN>/F1xxx/US1xxxx/CLAUDE.md -Status "In progress" -Note "claimed by <branch>"
+   (Run it from the main checkout's pm/ — the script edits the CLAUDE.md and regenerates the
+   tracker, both of which live on the shared tree, not inside your worktree's product code.)
 
 5. For each task in order:
    - Implement.
-   - Tick acceptance criteria checkboxes (- [ ] -> - [x]) as each is satisfied.
+   - Tick acceptance criteria checkboxes (- [ ] -> - [x]) as each is satisfied, then regenerate
+     the tracker so it reflects the new AC counts: pwsh -NoProfile -File pm/build-pm-html.ps1 -Path pm
+     (ticking a checkbox is not a status change, so it goes through the generator directly, not set-status.ps1).
    - If blocked, see "Blocker escalation".
 
 6. When every task's acceptance criteria are ticked:
-   - Bump story Status: to "Done" and Last updated:.
+   - Set story Status: to "Done" — run:
+     pwsh -NoProfile -File pm/set-status.ps1 -Path pm/E<NNN>/F1xxx/US1xxxx/CLAUDE.md -Status "Done"
    - Commit and push the branch.
    - Report completion to the PM (or human if no PM). Include: branch name, worktree path, one-paragraph summary, anything the PM should look at during review.
 ```
@@ -139,6 +154,16 @@ Every Feature, Story, and Task file has a `Status:` line and a `Last updated:` l
 
 Why the discipline matters: another agent reading the file later uses `Status:` to decide whether they can depend on this work. A stale `Status:` blocks downstream work even when the underlying code is fine, and a *prematurely* `Done` status causes downstream agents to build on sand.
 
+**Always change `Status:` through `pm/set-status.ps1`, never by hand-editing the line.** The script rewrites `Status:`, bumps `Last updated:`, appends a timestamped entry to the node's `## Status log` (`- <UTC timestamp> — <Status> — <note>`), and regenerates the HTML tracker — all atomically. Three things that must move together, so they can't drift:
+
+```
+pwsh -NoProfile -File pm/set-status.ps1 -Path pm/E<NNN>/F1xxx/US1xxxx/CLAUDE.md -Status "In progress" -Note "why"
+```
+
+The `## Status log` accumulates the node's whole history — `Created` (stamped by pm-init) → `In progress` → any intermediate state (`Blocked`) → `Done` — which is the audit trail a PM and the human read to see how a story actually progressed. Use `-Note` to record the *why* of each transition (who claimed it, what blocked it, which PR closed it). If you're making several status changes in a row, pass `-NoHtml` on all but the last to avoid regenerating the tracker repeatedly.
+
+`set-status.ps1` only handles **status** transitions. Ticking acceptance-criteria checkboxes or editing a file's body are not status changes — make those edits directly, then run `pm/build-pm-html.ps1 -Path pm` to refresh the tracker.
+
 ## HTML tracker sync — keep `.html` in step with `CLAUDE.md`
 
 Some PM trees ship a **static HTML tracker** mirroring the `CLAUDE.md` files: a sibling `E100.html` / `F1xxx.html` / `US1xxxx.html` next to every `CLAUDE.md`, plus a portfolio `pm/index.html`. The CLAUDE.md tree is the **single source of truth**; the HTML is generated from it, never hand-edited.
@@ -147,7 +172,7 @@ Some PM trees ship a **static HTML tracker** mirroring the `CLAUDE.md` files: a 
 
 How to detect and regenerate:
 
-1. Check for the generator at the pm root: `pm/build-pm-html.ps1`.
+1. Check for the generator at the pm root: `pm/build-pm-html.ps1` (the `pm-init` skill installs it there when it scaffolds a tree).
 2. If it exists, after your `CLAUDE.md` edits run:
    ```
    pwsh -NoProfile -File pm/build-pm-html.ps1
@@ -168,13 +193,17 @@ A Worker that hits a real blocker (missing dependency, ambiguous spec, broken ex
 **Needs from PM/human:** <the specific ask — clarification, dep fix, scope change>
 ```
 
+Also move the story's status to `Blocked` so the state is visible in the tracker and the transition is timestamped in the log:
+```
+pwsh -NoProfile -File pm/set-status.ps1 -Path pm/E<NNN>/F1xxx/US1xxxx/CLAUDE.md -Status "Blocked" -Note "<the specific ask>"
+```
 Then notify the PM via the same channel the PM used to brief you (typically a `SendMessage` to the PM's agent name, or a return message if you were spawned by `Agent`).
 
 The PM either:
 - **Resolves it** — clarifies, fixes the dep, narrows the scope.
 - **Escalates** — reports to the human and waits.
 
-The Worker pauses until unblocked. When the blocker is resolved, whoever resolved it deletes the `## Blocker` section and the Worker continues.
+The Worker pauses until unblocked. When the blocker is resolved, whoever resolved it deletes the `## Blocker` section and returns the story to `In progress` via `set-status.ps1`, and the Worker continues.
 
 ## Common pitfalls — avoid these
 
@@ -192,8 +221,12 @@ The Worker pauses until unblocked. When the blocker is resolved, whoever resolve
 ## When you finish a turn — quick checklist
 
 - Is every checkbox you ticked actually satisfied?
-- Did you bump `Last updated:` on every file you edited?
-- Did you update `Status:` if the lifecycle state moved?
-- If the tree has `pm/build-pm-html.ps1`, did you regenerate the HTML tracker after editing any `CLAUDE.md`?
+- If the lifecycle state moved, did you change it via `pm/set-status.ps1` (so the log entry, `Last updated:`, and HTML are all in step)?
+- For non-status edits (AC ticks, body changes), did you bump `Last updated:` and regenerate the tracker with `pm/build-pm-html.ps1`?
 - If you're a Worker who finished a story, did you push the branch and notify the PM?
 - If you're a PM who finished merging, did you remove the worktree and delete the branch (local + remote)?
+
+## Related skills
+
+- **pm-init** — scaffold a PM tree that doesn't exist yet (writes `PLAN.md`, the epic charter, the F/US/TASK skeleton, installs the HTML generator, assigns each story's `Model:`). If you activate `pm` but there's no `pm/E<NNN>/` tree, you want this first.
+- **pm-plan** — refine an existing tree in a planning session (split stories, repair dependencies, re-phase, re-evaluate model assignments) before or between execution passes.

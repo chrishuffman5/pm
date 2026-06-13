@@ -4,30 +4,42 @@
   Generates a "mini-Rally" HTML tracker from a pm/ CLAUDE.md tree.
 
 .DESCRIPTION
-  This generator ships WITH the pm skill (scripts/build-pm-html.ps1), so it is
-  always on hand for any project the skill works. CLAUDE.md is the single source
-  of truth. It walks a pm root containing E<NNN> epic folders (Epic -> Feature ->
-  User Story), parses each item's Status + acceptance-criteria checkboxes for
-  progress rollups, renders the markdown body to HTML, and emits a sibling HTML
-  page next to every CLAUDE.md plus a portfolio index.html at the pm root.
+  CLAUDE.md is the single source of truth. This generator walks a pm root containing
+  E<NNN> epic folders (Epic -> Feature -> User Story), parses each item's Status +
+  acceptance-criteria checkboxes for progress rollups, renders the markdown body to
+  HTML, and emits a sibling HTML page next to every CLAUDE.md plus a portfolio
+  index.html at the pm root.
 
-  Re-run after editing any CLAUDE.md to refresh the HTML (the pm skill does this
-  automatically). Output is static, offline, dependency-free: double-click any .html.
+  pm-init installs a copy of this script into the target repo at <repo>/pm/build-pm-html.ps1
+  so the project has a self-contained, project-agnostic generator. Re-run it after editing
+  any CLAUDE.md to refresh the HTML (the pm and pm-plan skills do this automatically).
+  Output is static, offline, dependency-free: double-click any .html.
 
 .PARAMETER Path
-  The pm root: a folder that directly contains the E<NNN> epic folders (e.g.
-  <repo>/pm). If omitted, the script auto-detects: it uses ./pm when that holds
-  epic folders, else the current directory when it does, else errors. Because the
-  script lives in the skill (not in any project), always pass -Path when invoking
-  it from the skill, e.g. -Path <repo>/pm.
+  The pm root: a folder that directly contains the E<NNN> epic folders (e.g. <repo>/pm).
+  If omitted, auto-detects: ./pm when that holds epic folders, else the current directory
+  when it does, else errors.
+
+.PARAMETER ProjectName
+  Brand shown in the topbar, page <title>, footer, and portfolio hero heading. If omitted,
+  defaults to the name of the repo folder that contains the pm root (e.g. "winnie" for
+  C:\repo\winnie\pm).
+
+.PARAMETER Lede
+  One-line subtitle shown under the portfolio heading on index.html. If omitted, a generic
+  tagline is used.
 
 .EXAMPLE
-  pwsh build-pm-html.ps1 -Path C:\repo\pm
+  pwsh build-pm-html.ps1 -Path C:\repo\pm -ProjectName "landfinder" -Lede "Daily land scanner for Middle TN."
 .EXAMPLE
-  cd C:\repo ; pwsh <skill>\scripts\build-pm-html.ps1   # auto-detects .\pm
+  cd C:\repo ; pwsh pm\build-pm-html.ps1   # auto-detects .\pm and the repo folder name
 #>
 [CmdletBinding()]
-param([string]$Path)
+param(
+    [string]$Path,
+    [string]$ProjectName,
+    [string]$Lede
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -46,6 +58,15 @@ function Resolve-PmRoot([string]$p) {
     throw "Could not locate a pm root (a folder containing E<NNN> epic dirs). Pass -Path <repo>/pm."
 }
 $pmDir = Resolve-PmRoot $Path
+
+# Project branding: default to the repo folder name (parent of the pm root) and a generic lede.
+if (-not $ProjectName) {
+    $parent = Split-Path -Parent $pmDir
+    $ProjectName = if ($parent) { Split-Path -Leaf $parent } else { 'pm' }
+}
+if (-not $Lede) {
+    $Lede = 'Live progress across every epic, feature, and user story &mdash; rendered straight from the CLAUDE.md tree.'
+}
 
 # ---------------------------------------------------------------------------
 # Markdown -> HTML (targeted to the subset used by the CLAUDE.md templates)
@@ -150,7 +171,7 @@ function Convert-Markdown([string[]]$lines) {
 # ---------------------------------------------------------------------------
 function Get-Meta([string]$claudePath, [string]$idFallback) {
     $lines = @(Get-Content -LiteralPath $claudePath -Encoding utf8)
-    $title = $idFallback; $status = $null; $phase = $null; $depends = $null; $updated = $null
+    $title = $idFallback; $status = $null; $phase = $null; $depends = $null; $updated = $null; $model = $null
 
     for ($k = 0; $k -lt [Math]::Min(3, $lines.Count); $k++) {
         if ($lines[$k] -match '^#\s+(.+?)\s*$') { $title = $Matches[1]; break }
@@ -161,6 +182,7 @@ function Get-Meta([string]$claudePath, [string]$idFallback) {
         elseif ($l -match '^\*\*Phase:\*\*\s*(.+?)\s*$') { $phase = $Matches[1] }
         elseif ($l -match '^\*\*Depends on:\*\*\s*(.+?)\s*$') { $depends = $Matches[1] }
         elseif ($l -match '^\*\*Last updated:\*\*\s*(.+?)\s*$') { $updated = $Matches[1] }
+        elseif ($l -match '^\*\*Model:\*\*\s*(.+?)\s*$') { $model = $Matches[1] }
     }
 
     # acceptance-criteria checkboxes, ignoring fenced code blocks (epic charter has template placeholders)
@@ -171,18 +193,47 @@ function Get-Meta([string]$claudePath, [string]$idFallback) {
         if ($l -match '^\s*- \[( |x|X)\]') { $acTotal++; if ($Matches[1] -ne ' ') { $acDone++ } }
     }
 
+    # status-log timestamps (Created / first In progress / Done), parsed from a "## Status log" section.
+    # Entries look like: "- 2026-06-13T18:42Z — In progress — optional note". Dash may be -, en-, or em-dash.
+    $created = $null; $started = $null; $completed = $null; $firstTs = $null; $inLog = $false
+    foreach ($l in $lines) {
+        if ($l -match '^##\s') { $inLog = [bool]($l -match '^##\s+Status log\s*$'); continue }
+        if (-not $inLog) { continue }
+        if ($l -match '^\s*-\s+(\S+)\s+[–—-]\s+(.+)$') {
+            $ts = $Matches[1]
+            $st = (($Matches[2] -split '\s+[–—-]\s+', 2)[0]).Trim()
+            if (-not $firstTs) { $firstTs = $ts }
+            switch -regex ($st) {
+                'Created|Not started' { $created = $ts }
+                'In progress' { if (-not $started) { $started = $ts } }
+                'Done' { $completed = $ts }
+            }
+        }
+    }
+    if (-not $created) { $created = $firstTs }
+
     # body = everything except the first H1 and the **metadata:** lines
     $body = @(); $skippedH1 = $false
     foreach ($l in $lines) {
         if (-not $skippedH1 -and $l -match '^#\s+') { $skippedH1 = $true; continue }
-        if ($l -match '^\*\*(Phase|Status|Depends on|Last updated|Feature|Effort|Story):\*\*') { continue }
+        if ($l -match '^\*\*(Phase|Status|Depends on|Last updated|Feature|Effort|Story|Model):\*\*') { continue }
         $body += $l
     }
 
     [pscustomobject]@{
-        Title = $title; Status = $status; Phase = $phase; Depends = $depends; Updated = $updated
+        Title = $title; Status = $status; Phase = $phase; Depends = $depends; Updated = $updated; Model = $model
+        Created = $created; Started = $started; Completed = $completed
         AcTotal = $acTotal; AcDone = $acDone; Body = (Convert-Markdown $body)
     }
+}
+
+# created / started / done chips, built from the parsed status log (empty when no log present)
+function TimeChips($m) {
+    $c = ''
+    if ($m.Created) { $c += "<span class=`"chip`">created <b>$($m.Created)</b></span>" }
+    if ($m.Started) { $c += "<span class=`"chip`">started <b>$($m.Started)</b></span>" }
+    if ($m.Completed) { $c += "<span class=`"chip`">done <b>$($m.Completed)</b></span>" }
+    $c
 }
 
 # ---------------------------------------------------------------------------
@@ -309,18 +360,19 @@ function Write-Html([string]$file, [string]$html) {
 }
 
 function Page([string]$pageTitle, [string]$crumbHtml, [string]$bodyHtml) {
+    $brand = [System.Net.WebUtility]::HtmlEncode($ProjectName)
     $legend = '<div class="legend"><span><i class="i-done"></i>Done</span><span><i class="i-wip"></i>In&nbsp;progress</span><span><i class="i-todo"></i>Not&nbsp;started</span></div>'
     @"
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>$pageTitle &middot; winnie</title>
+<title>$pageTitle &middot; $brand</title>
 $FontLink
 <style>$Css</style></head>
 <body>
-<div class="topbar"><div class="wrap"><span class="brand">winnie<span class="sp">//</span></span><nav class="crumb">$crumbHtml</nav></div></div>
+<div class="topbar"><div class="wrap"><span class="brand">$brand<span class="sp">//</span></span><nav class="crumb">$crumbHtml</nav></div></div>
 <div class="wrap">
 $bodyHtml
-<div class="foot"><span>winnie pm tracker &middot; generated from CLAUDE.md</span>$legend</div>
+<div class="foot"><span>$brand pm tracker &middot; generated from CLAUDE.md</span>$legend</div>
 </div></body></html>
 "@
 }
@@ -380,11 +432,12 @@ foreach ($e in $model) {
 "@
     $idx++
 }
+$brandHero = [System.Net.WebUtility]::HtmlEncode($ProjectName)
 $body = @"
 <div class="hero">
 <div class="eyebrow">Project tracker</div>
-<h1 class="title">winnie</h1>
-<p class="lede">Skill-driven remote configuration &amp; gold-image bakery for Windows on AWS. Live progress across every epic, feature, and user story &mdash; rendered straight from the CLAUDE.md tree.</p>
+<h1 class="title">$brandHero</h1>
+<p class="lede">$Lede</p>
 <div class="bigprog"><div class="lab"><span>Portfolio completion</span><span><b>$gDone</b> / $gTotal stories done</span></div>$(Bar $gDone $gTotal)</div>
 </div>
 <div class="section-h">Epics</div>
@@ -426,7 +479,7 @@ foreach ($e in $model) {
 </div>
 $featSections
 <div class="section-h">Epic charter</div>
-<details class="charter"><summary>Read the full E100 charter (from CLAUDE.md)</summary><div class="inner prose">$($e.Meta.Body)</div></details>
+<details class="charter"><summary>Read the full $($e.Id) charter (from CLAUDE.md)</summary><div class="inner prose">$($e.Meta.Body)</div></details>
 "@
     Write-Html (Join-Path $e.Dir "$($e.Id).html") (Page $e.Id $crumb $body)
 
@@ -456,7 +509,7 @@ $featSections
 <div class="hero">
 <div class="eyebrow">Feature &middot; $($f.Id)</div>
 <h1 class="title">$($f.Meta.Title)</h1>
-<div class="metarow">$(Badge $f.Meta.Status)$phChip$depChip$updChip</div>
+<div class="metarow">$(Badge $f.Meta.Status)$phChip$depChip$updChip$(TimeChips $f.Meta)</div>
 <div class="bigprog"><div class="lab"><span>Story completion</span><span><b>$($f.Done)</b> / $($f.Total) done</span></div>$(Bar $f.Done $f.Total)</div>
 </div>
 <div class="section-h">User stories &middot; $($f.Total)</div>
@@ -473,6 +526,7 @@ $featSections
             $crumb = "<a href=`"../../../index.html`">Portfolio</a><span class=`"sep`">&rsaquo;</span><a href=`"../../$($e.Id).html`">$($e.Id)</a><span class=`"sep`">&rsaquo;</span><a href=`"../$($f.Id).html`">$($f.Id)</a><span class=`"sep`">&rsaquo;</span><span class=`"cur`">$($s.Id)</span>"
             $depChip = if ($s.Meta.Depends -and $s.Meta.Depends -ne 'none') { "<span class=`"chip`">depends&nbsp;on <b>$($s.Meta.Depends)</b></span>" } else { '<span class="chip">no deps</span>' }
             $updChip = if ($s.Meta.Updated) { "<span class=`"chip`">updated <b>$($s.Meta.Updated)</b></span>" } else { '' }
+            $mdlChip = if ($s.Meta.Model) { "<span class=`"chip`">model <b>$($s.Meta.Model)</b></span>" } else { '' }
             $prev = if ($si -gt 0) { $f.Stories[$si - 1] } else { $null }
             $next = if ($si -lt $f.Stories.Count - 1) { $f.Stories[$si + 1] } else { $null }
             $prevH = if ($prev) { "<a class=`"sib prev`" href=`"../$($prev.Id)/$($prev.Id).html`"><div class=`"dir`">&larr; Prev story</div>$($prev.Id)</a>" } else { '<span class="sib prev disabled"></span>' }
@@ -481,7 +535,7 @@ $featSections
 <div class="hero">
 <div class="eyebrow">User story &middot; $($s.Id)</div>
 <h1 class="title">$($s.Meta.Title)</h1>
-<div class="metarow">$(Badge $s.Meta.Status)$depChip$updChip</div>
+<div class="metarow">$(Badge $s.Meta.Status)$mdlChip$depChip$updChip$(TimeChips $s.Meta)</div>
 <div class="bigprog"><div class="lab"><span>Acceptance criteria</span><span><b>$($s.Meta.AcDone)</b> / $($s.Meta.AcTotal) ticked</span></div>$(Bar $s.Meta.AcDone $s.Meta.AcTotal)</div>
 </div>
 <div class="prose">$($s.Meta.Body)</div>
@@ -492,9 +546,8 @@ $featSections
     }
 }
 
-$pages = 1 + ($model.Count) + (($model.Features | Measure-Object).Count)
 $storyCount = ($model | ForEach-Object { $_.Features } | ForEach-Object { $_.Stories } | Measure-Object).Count
 $featCount = ($model | ForEach-Object { $_.Features } | Measure-Object).Count
-Write-Host "pm tracker built:" -ForegroundColor Yellow
+Write-Host "pm tracker built for '$ProjectName':" -ForegroundColor Yellow
 Write-Host "  index.html + $($model.Count) epic + $featCount feature + $storyCount story = $(1 + $model.Count + $featCount + $storyCount) pages"
 Write-Host "  open: $(Join-Path $pmDir 'index.html')"

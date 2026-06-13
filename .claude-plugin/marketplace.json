@@ -1,6 +1,6 @@
 {
   "name": "pm",
-  "description": "Rally-style PM tree workflow (Epic → Feature → User Story → Task) with PM/Worker agent roles, git-worktree-per-story parallelism, status discipline, and HTML tracker sync.",
+  "description": "Rally-style PM tree lifecycle suite (Epic → Feature → User Story → Task): pm-init scaffolds a tree, pm-plan refines it, and pm executes it with a team of PM/Worker agents — git-worktree-per-story parallelism, per-story model assignment, status discipline, and a generated HTML tracker.",
   "owner": {
     "name": "Christopher Huffman",
     "email": "50709169+chrishuffman5@users.noreply.github.com"
@@ -8,8 +8,8 @@
   "plugins": [
     {
       "name": "pm",
-      "description": "Rally-style PM tree workflow (Epic → Feature → User Story → Task) with PM/Worker agent roles, git-worktree-per-story parallelism, status discipline, and HTML tracker sync.",
-      "version": "0.1.0",
+      "description": "Rally-style PM tree lifecycle suite (Epic → Feature → User Story → Task): pm-init scaffolds a tree, pm-plan refines it, and pm executes it with a team of PM/Worker agents — git-worktree-per-story parallelism, per-story model assignment, status discipline, and a generated HTML tracker.",
+      "version": "0.2.0",
       "source": {
         "source": "url",
         "url": "https://github.com/chrishuffman5/pm.git"
