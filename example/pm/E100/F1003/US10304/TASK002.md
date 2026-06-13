@@ -16,9 +16,9 @@ Change the repository visibility to public so the marketplace `source.url` resol
 - Ensure GitHub Pages (US10302) remains served after the visibility change.
 
 ## Acceptance criteria
-- [ ] the repo is public
-- [ ] `marketplace.json` `source.url` resolves to the public repo
-- [ ] the Pages dashboard is still reachable post-flip
+- [x] the repo is public
+- [x] `marketplace.json` `source.url` resolves to the public repo
+- [x] the Pages dashboard is still reachable post-flip
 
 ## Out of scope
 - Verifying the install flow (TASK003).

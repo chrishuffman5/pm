@@ -18,9 +18,9 @@ test/scratch artifacts remain before the repo goes public.
 - Confirm author/homepage/repository URLs follow the `domain-expert` plugin's shape.
 
 ## Acceptance criteria
-- [ ] `version` matches across `plugin.json` and `marketplace.json`
-- [ ] no scratch/test run artifacts are tracked by git
-- [ ] manifest URLs and metadata are correct for a public listing
+- [x] `version` matches across `plugin.json` and `marketplace.json`
+- [x] no scratch/test run artifacts are tracked by git
+- [x] manifest URLs and metadata are correct for a public listing
 
 ## Out of scope
 - Actually flipping visibility (TASK002).

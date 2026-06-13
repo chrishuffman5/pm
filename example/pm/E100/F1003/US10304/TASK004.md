@@ -18,9 +18,9 @@ understand the skill, with the live dashboard as the showcase.
 - Link the GitHub Pages example dashboard as the clickable reference shape.
 
 ## Acceptance criteria
-- [ ] the README documents install and all three modes
-- [ ] the announcement/docs link the live Pages dashboard
-- [ ] listing copy and README are consistent
+- [x] the README documents install and all three modes
+- [x] the announcement/docs link the live Pages dashboard
+- [x] listing copy and README are consistent
 
 ## Out of scope
 - Any further feature work; this closes the release feature.

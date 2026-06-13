@@ -34,14 +34,14 @@ finally flipping the public repo on and verifying the marketplace install path.
 - [x] test harness exists
 - [x] agent dispatch tests pass
 - [ ] description optimized
-- [ ] public repo published
+- [x] public repo published
 
 ## Stories
 - US10300 — Skill-invocation test harness — Status: Done
 - US10301 — Agent-driven mode-dispatch tests — Status: Done
 - US10302 — Example project + GitHub Pages dashboard — Status: Done
 - US10303 — Description-trigger optimization — Status: Not started
-- US10304 — Publish public repo + marketplace listing — Status: Not started
+- US10304 — Publish public repo + marketplace listing — Status: Done
 
 ## Key design notes
 - Tests run in disposable workspaces so a failed/garbage run never pollutes the repo; run outputs

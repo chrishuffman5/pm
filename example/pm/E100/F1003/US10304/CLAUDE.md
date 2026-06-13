@@ -1,8 +1,8 @@
 # US10304 — Publish public repo + marketplace listing
 **Feature:** F1003
-**Status:** Not started
+**Status:** Done
 **Model:** claude-sonnet-4-6
-**Depends on:** US10302, US10303
+**Depends on:** US10302
 **Last updated:** 2026-06-13
 
 ## User value
@@ -11,10 +11,10 @@ As a Claude Code user, I want to install the `pm` skill from a public marketplac
 commands, so that I can adopt it without cloning or hand-wiring anything.
 
 ## Acceptance criteria
-- [ ] a final review and cleanup pass is complete
-- [ ] the repo is flipped public
-- [ ] the marketplace install path is verified end-to-end
-- [ ] the release is announced / documented
+- [x] a final review and cleanup pass is complete
+- [x] the repo is flipped public
+- [x] the marketplace install path is verified end-to-end
+- [x] the release is announced / documented
 
 ## Tasks
 - TASK001 — Final review & cleanup
@@ -29,3 +29,4 @@ from a clean machine, the skill loads, and the announcement/docs point at the pu
 
 ## Status log
 - 2026-06-12T16:10Z — Created
+- 2026-06-13T17:53Z — Done — repo public + v0.1.0 released; marketplace install verified

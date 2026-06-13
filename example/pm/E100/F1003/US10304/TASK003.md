@@ -17,9 +17,9 @@ environment.
   next session, not the running one).
 
 ## Acceptance criteria
-- [ ] `marketplace add` + `install pm@pm` succeed from a clean machine
-- [ ] the `pm` skill loads and is invocable as `/pm`
-- [ ] the installed manifest version matches the marketplace listing
+- [x] `marketplace add` + `install pm@pm` succeed from a clean machine
+- [x] the `pm` skill loads and is invocable as `/pm`
+- [x] the installed manifest version matches the marketplace listing
 
 ## Out of scope
 - Announcement and docs (TASK004).
