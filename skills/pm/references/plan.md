@@ -1,13 +1,10 @@
----
-name: plan
-description: Refine an existing Rally-style PM tree (Epic → Feature → User Story → Task) during a planning or grooming session — review and reshape it, don't build it from scratch and don't spawn agents to execute it. Invoked as /pm:plan; it is the plan sub-skill of the pm plugin. Use this whenever someone wants to "refine the plan", "review the epics/features/stories", "groom the backlog", "re-decompose this feature", "split this story", "add a feature/story to the tree", "fix the dependency graph", "re-balance the phases", "re-prioritize", "tighten up the acceptance criteria", or "re-check which stories should be on Opus". This is the iterate-on-what-exists skill; if there is no tree yet use /pm:init to scaffold one, and if the plan is settled and you want to execute stories with a team of agents use the pm skill.
----
+# `plan` mode — Refine an existing PM tree
 
-# pm:plan — Refine an existing PM tree
+> **This is the `plan` reference prompt of the `pm` skill.** You're here because the invocation began with `pm plan` (or the request is clearly to refine/groom an existing tree, not build or execute it). Paths below are relative to the `pm` skill's base directory.
 
-Use this skill for the **planning sessions between scaffolding and execution**: a human and Claude sitting down with an existing `pm/` tree to reshape it — split stories that grew too big, fix a dependency that's wrong, add a feature that emerged, re-balance phases, sharpen vague acceptance criteria, re-check model assignments. The output is a better-shaped tree, not running code.
+Use this for the **planning sessions between scaffolding and execution**: a human and Claude sitting down with an existing `pm/` tree to reshape it — split stories that grew too big, fix a dependency that's wrong, add a feature that emerged, re-balance phases, sharpen vague acceptance criteria, re-check model assignments. The output is a better-shaped tree, not running code.
 
-This skill changes *plans*, not product code. If you find yourself implementing a task, you've crossed into execution — that's the `pm` skill's job.
+This mode changes *plans*, not product code. If you find yourself implementing a task, you've crossed into execution — that's the `pm` skill's default mode.
 
 ## Ground yourself first — the tree is the source of truth
 
@@ -23,7 +20,7 @@ If something in the tree contradicts the repo's root `CLAUDE.md` (the design nor
 
 IDs (`F1xxx`, `US1xxxx`, `TASK[NNN]`) are referenced as dependencies all over the tree. Renumbering or deleting an ID silently breaks every `Depends on:` line that points at it. So:
 
-- **Add** new features/stories/tasks with the next free ID; never renumber existing ones to "tidy up". Write each new node from the templates in the seeded `pm/E<NNN>/CLAUDE.md` charter — including a `## Status log` seeded with a `- <UTC timestamp> — Created` line, just like /pm:init does.
+- **Add** new features/stories/tasks with the next free ID; never renumber existing ones to "tidy up". Write each new node from the templates in the seeded `pm/E<NNN>/CLAUDE.md` charter — including a `## Status log` seeded with a `- <UTC timestamp> — Created` line, just like `pm init` does.
 - When a story must be **split**, keep the original ID for one half and give the new work fresh IDs; update the parent feature's `## Stories` list and any `Depends on:` lines that should now point at the new IDs.
 - When work is **dropped**, mark it `Cancelled` (with a reason) rather than deleting the folder, unless the user explicitly wants it gone and you've confirmed nothing depends on it. Use the helper so the cancellation is timestamped in the log: `pwsh -NoProfile -File pm/set-status.ps1 -Path <node>/CLAUDE.md -Status "Cancelled" -Note "<why>"`.
 
@@ -38,7 +35,7 @@ Pick what the user asked for; you rarely do all of these at once.
 - **Dependency repair** — walk the `Depends on:` lines. Fix wrong ones, add missing ones, and watch for cycles (A→B→A is always a bug). Make sure `PLAN.md`'s phase graph still agrees with the per-file dependencies.
 - **Phase re-balancing** — move features between phases when the dependency reality changed. Update `PLAN.md` and each feature's `Phase:` line together.
 - **Acceptance-criteria sharpening** — vague ACs cause premature `Done` and rework. Make each one objectively checkable.
-- **Model re-assignment** — re-evaluate each story's `**Model:**` against the heuristic (default `claude-sonnet-4-6`; `claude-opus-4-8` for architectural, ambiguous, algorithmic, cross-cutting, or security-sensitive stories). A story that grew in scope during refinement may now warrant Opus; one that got split into simpler pieces may drop back to Sonnet. The heuristic and full rationale live in the pm skill's `../references/tree-structure.md`.
+- **Model re-assignment** — re-evaluate each story's `**Model:**` against the heuristic (default `claude-sonnet-4-6`; `claude-opus-4-8` for architectural, ambiguous, algorithmic, cross-cutting, or security-sensitive stories). A story that grew in scope during refinement may now warrant Opus; one that got split into simpler pieces may drop back to Sonnet. The heuristic and full rationale live in the pm skill's `references/tree-structure.md`.
 
 ## Keep the three views in step — every turn
 
@@ -64,9 +61,9 @@ This skill reshapes the *plan*; it does not advance execution state. Leave `Stat
 3. **Re-decomposing without re-pointing dependencies.** When you split a story, anything that depended on the old scope needs its `Depends on:` updated to the right new ID.
 4. **Sharpening ACs into a different scope.** Tightening an AC is good; silently expanding what the story must deliver is scope creep — call it out or make it a new story.
 5. **Forgetting to regenerate the HTML tracker** after CLAUDE.md edits, so the tracker misrepresents the freshly-refined plan.
-6. **Drifting into implementation.** If you're writing product code, switch to the `pm` skill — refinement stops at the plan.
+6. **Drifting into implementation.** If you're writing product code, you're in the wrong mode — refinement stops at the plan; switch to the `pm` default (execution) mode.
 
-## Related skills
+## The other modes
 
-- **/pm:init** — if there's no tree yet, scaffold one first (it seeds the master templates this skill then reads from the charter).
-- **pm** — once the plan is settled, execute it: a PM agent spawns Worker agents in git worktrees to build the stories out, on each story's assigned model.
+- **`pm init`** — if there's no tree yet, scaffold one first (it seeds the master templates this mode then reads from the charter).
+- **`pm`** (default/execution) — once the plan is settled, build it out: a PM agent spawns Worker agents in git worktrees on each story's assigned model.

@@ -10,9 +10,9 @@
   HTML, and emits a sibling HTML page next to every CLAUDE.md plus a portfolio
   index.html at the pm root.
 
-  /pm:init installs a copy of this script into the target repo at <repo>/pm/build-pm-html.ps1
-  so the project has a self-contained, project-agnostic generator. Re-run it after editing
-  any CLAUDE.md to refresh the HTML (the pm and /pm:plan skills do this automatically).
+  The pm skill's init mode installs a copy of this script into the target repo at
+  <repo>/pm/build-pm-html.ps1 so the project has a self-contained, project-agnostic generator.
+  Re-run it after editing any CLAUDE.md to refresh the HTML (the pm skill does this automatically).
   Output is static, offline, dependency-free: double-click any .html.
 
 .PARAMETER Path

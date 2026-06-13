@@ -1,6 +1,6 @@
 # PM tree — structure, templates, numbering (master reference)
 
-This is the **canonical source** for the PM-tree layout, the file templates, and the numbering scheme. `/pm:init` writes these into a target repo; once seeded, the `pm` (execution) and `/pm:plan` (refinement) skills read the *seeded* copies from the target repo, not this file. So treat what you write here as the contract every later agent depends on.
+This is the **canonical source** for the PM-tree layout, the file templates, and the numbering scheme. The `pm` skill's **init** mode writes these into a target repo; once seeded, the **execute** and **plan** modes read the *seeded* copies from the target repo, not this file. So treat what you write here as the contract every later agent depends on.
 
 ## Directory layout
 
@@ -10,8 +10,8 @@ A PM tree lives under `pm/` at the repo root — fully self-contained: the roadm
 <repo>/
 └── pm/
     ├── PLAN.md                           ← cross-feature roadmap: feature catalog + phase/dependency graph (rendered into index.html)
-    ├── build-pm-html.ps1                 ← HTML tracker generator (/pm:init installs this)
-    ├── set-status.ps1                    ← status-change helper (/pm:init installs this)
+    ├── build-pm-html.ps1                 ← HTML tracker generator (`pm init` installs this)
+    ├── set-status.ps1                    ← status-change helper (`pm init` installs this)
     ├── index.html                        ← portfolio dashboard (generated; embeds PLAN.md)
     └── E100/                             ← Epic
         ├── CLAUDE.md                     ← epic charter (templates + numbering + working agreement live here)
@@ -176,7 +176,7 @@ Tasks (`TASK[NNN].md`) have no `Status:` line — they track progress through ac
 
 ## HTML tracker
 
-The tree ships a static, dependency-free HTML mirror generated from the `CLAUDE.md` files — `CLAUDE.md` is always the single source of truth; the HTML is derived and never hand-edited. The generator `build-pm-html.ps1` (in this skill's `scripts/`, installed by /pm:init into the target repo's `pm/`) walks the tree, parses each item's `Status:` and acceptance-criteria checkboxes for progress rollups, and emits:
+The tree ships a static, dependency-free HTML mirror generated from the `CLAUDE.md` files — `CLAUDE.md` is always the single source of truth; the HTML is derived and never hand-edited. The generator `build-pm-html.ps1` (in this skill's `scripts/`, installed by `pm init` into the target repo's `pm/`) walks the tree, parses each item's `Status:` and acceptance-criteria checkboxes for progress rollups, and emits:
 
 - `pm/index.html` — portfolio page (all epics, overall completion bar)
 - `pm/E<NNN>/E<NNN>.html` — epic page (features grouped by phase, story rollups)
@@ -191,7 +191,7 @@ pwsh -NoProfile -File pm/build-pm-html.ps1 -Path <repo>/pm -ProjectName "<Projec
 ```
 `-ProjectName` sets the brand/title shown across all pages; `-Lede` sets the portfolio subtitle. Both fall back sensibly (repo folder name / generic tagline) if omitted.
 
-The companion `set-status.ps1` (also installed into `pm/` by /pm:init) is the preferred way to change a node's status: it rewrites `Status:`, bumps `Last updated:`, appends the timestamped `## Status log` entry, and regenerates the HTML in one call — see "Status log" above.
+The companion `set-status.ps1` (also installed into `pm/` by `pm init`) is the preferred way to change a node's status: it rewrites `Status:`, bumps `Last updated:`, appends the timestamped `## Status log` entry, and regenerates the HTML in one call — see "Status log" above.
 
 ## File-count verification
 

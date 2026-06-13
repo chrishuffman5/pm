@@ -1,22 +1,22 @@
 # pm — Rally-style PM tree plugin
 
-A Claude Code plugin that teaches agents to run a **Rally hierarchy** (Epic → Feature → User Story → Task) stored as a tree of `CLAUDE.md` files under `pm/E<NNN>/`. It ships one top-level skill, **`pm`** (execution), with two sub-skills — **`/pm:init`** (scaffold) and **`/pm:plan`** (refine) — covering the full lifecycle of such a tree.
+A Claude Code plugin with a single **`pm`** skill for working a **Rally hierarchy** (Epic → Feature → User Story → Task) stored as a tree of `CLAUDE.md` files under `pm/E<NNN>/`. The skill has **three modes**, selected by the first token of the invocation (or inferred from intent).
 
 The workflow was originally authored for the [`landfinder`](https://github.com/chrishuffman5/landfinder) repo's `pm/E100/` tree but applies to any repo laid out the same way.
 
-## The skill and its sub-skills
+## Three modes of `/pm`
 
-| Skill | Phase | What it does | Triggers on |
-|-------|-------|--------------|-------------|
-| **pm** | Execution | Builds the tree out: a long-running **PM agent** owns a Feature and spawns short-lived **Worker agents** — one per story, in a dedicated git worktree, on that story's assigned model — then reviews and merges their work. Owns the shared `scripts/` and `references/`. | "act as pm for F1xxx", "claim a story", "worktree for a story", "tick the checkboxes", "I'm the pm" |
-| **/pm:init** | Genesis | Scaffolds a tree from a design brief: writes `pm/PLAN.md`, the `E<NNN>/CLAUDE.md` charter, the F/US/TASK folder skeleton, installs the two helper scripts, and auto-assigns each story a `Model:`. | "scaffold the PM tree", "bootstrap the Rally hierarchy", "set up pm/E100", "build out the feature/story/task structure" |
-| **/pm:plan** | Refinement | Reshapes an existing tree in a planning session: split stories, repair dependency graphs, re-balance phases, sharpen acceptance criteria, re-evaluate model assignments. Additive, never destructive. | "refine the plan", "groom the backlog", "re-decompose this feature", "fix the dependencies", "re-prioritize" |
+| Invocation | Mode | What it does | Triggers on |
+|------------|------|--------------|-------------|
+| `/pm init …` | Scaffold | Builds a tree from a design brief: writes `pm/PLAN.md`, the `E<NNN>/CLAUDE.md` charter, the F/US/TASK folder skeleton, installs the two helper scripts, and auto-assigns each story a `Model:`. | "scaffold the PM tree", "bootstrap the Rally hierarchy", "set up pm/E100" |
+| `/pm plan …` | Refine | Reshapes an existing tree in a planning session: split stories, repair dependency graphs, re-balance phases, sharpen acceptance criteria, re-evaluate model assignments. Additive, never destructive. | "refine the plan", "groom the backlog", "re-decompose this feature", "re-prioritize" |
+| `/pm …` | Execute (default) | Builds the tree out: a long-running **PM agent** owns a Feature and spawns short-lived **Worker agents** — one per story, in a dedicated git worktree, on that story's assigned model — then reviews and merges their work. | "act as pm for F1xxx", "claim a story", "worktree for a story", "I'm the pm" |
 
-`init` and `plan` are nested inside the `pm` skill's directory, so they share `pm`'s bundled `scripts/` and `references/` (the master templates) rather than duplicating them.
+The `init` and `plan` workflows are **reference prompts** (`references/init.md`, `references/plan.md`) that `SKILL.md` routes to based on the first word of the request; `execute` is the default in `SKILL.md` itself. One skill, one set of bundled `scripts/` and `references/`, no duplication.
 
 ### The `Model:` contract
 
-Each story's `CLAUDE.md` carries a `**Model:**` line (`claude-sonnet-4-6` by default, `claude-opus-4-8` for architectural / ambiguous / algorithmic / cross-cutting / security-sensitive work). `/pm:init` assigns it at scaffold time, `/pm:plan` re-evaluates it, and `pm` reads it to decide which model to spawn each Worker on. Picking the model is a planning decision, not a spawn-time guess.
+Each story's `CLAUDE.md` carries a `**Model:**` line (`claude-sonnet-4-6` by default, `claude-opus-4-8` for architectural / ambiguous / algorithmic / cross-cutting / security-sensitive work). `init` mode assigns it at scaffold time, `plan` mode re-evaluates it, and `execute` mode reads it to decide which model to spawn each Worker on. Picking the model is a planning decision, not a spawn-time guess.
 
 ### Status log & timestamps
 
@@ -24,28 +24,28 @@ Every epic/feature/story file keeps a `## Status log` — one UTC-timestamped li
 
 ### Self-contained `pm/` folder
 
-Everything the workflow needs lives under the target repo's `pm/`: `PLAN.md` (the roadmap, rendered into the dashboard), the two helper scripts, the generated `index.html` dashboard, and the epic tree. `/pm:init` lays this down; if you run `pm` on a tree missing the scripts, it installs them from its own bundled copies (`${CLAUDE_SKILL_DIR}/scripts/`).
+Everything the workflow needs lives under the target repo's `pm/`: `PLAN.md` (the roadmap, rendered into the dashboard), the two helper scripts, the generated `index.html` dashboard, and the epic tree. `init` mode lays this down; if you run `execute` mode on a tree missing the scripts, it installs them from the skill's own bundled copies (`${CLAUDE_SKILL_DIR}/scripts/`).
 
 ## Repository layout
 
 ```
 skills/
-└── pm/                                  ← top-level skill (execution); owns shared assets
-    ├── SKILL.md
+└── pm/                                 ← the single skill
+    ├── SKILL.md                        ← mode dispatch + the execute-mode workflow
     ├── scripts/
-    │   ├── build-pm-html.ps1            ← tracker generator (installed into target repos)
-    │   └── set-status.ps1               ← status change → timestamped log → HTML regen
-    ├── references/
-    │   ├── tree-structure.md            ← master templates, numbering, model heuristic, status-log standard, HTML structure
-    │   └── worktree.md                  ← git worktree commands for the per-story workflow
-    ├── init/SKILL.md                    ← /pm:init  (uses ../scripts, ../references)
-    └── plan/SKILL.md                    ← /pm:plan  (uses ../references)
+    │   ├── build-pm-html.ps1           ← tracker generator (installed into target repos)
+    │   └── set-status.ps1              ← status change → timestamped log → HTML regen
+    └── references/
+        ├── init.md                     ← `/pm init` reference prompt (scaffold)
+        ├── plan.md                     ← `/pm plan` reference prompt (refine)
+        ├── tree-structure.md           ← master templates, numbering, model heuristic, status-log standard, HTML structure
+        └── worktree.md                 ← git worktree commands for the per-story workflow
 .claude-plugin/
 ├── plugin.json
 └── marketplace.json
 ```
 
-`references/tree-structure.md` is the single source of truth for the templates; `/pm:init` seeds them into a target repo's charter, and `pm` / `/pm:plan` read the seeded copy from there.
+`SKILL.md` reads the first token of the request and routes to `references/init.md` or `references/plan.md`, or stays in execute mode. `references/tree-structure.md` is the single source of truth for the templates; `init` mode seeds them into a target repo's charter, and `plan`/`execute` read the seeded copy from there.
 
 ## Install
 

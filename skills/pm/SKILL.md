@@ -1,15 +1,31 @@
 ---
 name: pm
-description: Execution workflow for a Rally-style PM tree at pm/E<NNN>/ (Epic → Feature → User Story → Task) — spawning and coordinating a team of agents to build it out. Use this skill whenever an agent is asked to work on a feature (F1xxx), pick up a user story (US1xxxx), execute a task (TASK[NNN]), act as project manager for a feature, delegate user stories to worker agents, update status fields or tick acceptance-criteria checkboxes in pm/E<NNN>/, create or merge git worktrees for parallel story work, surface blockers up to a project manager, or coordinate handoffs between agents working on the same feature. Trigger even when the user only mentions "PM tree", "worktree for a story", "tick the checkboxes", "claim a story", or "I'm the pm" — those are signals you should follow this skill rather than improvise. This is the build-it-out skill; to scaffold a tree that doesn't exist yet use /pm:init, and to refine an existing tree in a planning session use /pm:plan.
+description: Work a Rally-style PM tree at pm/E<NNN>/ (Epic → Feature → User Story → Task) — scaffold one, refine one, or execute one with a team of agents. Invoke as `/pm` (execution, the default), `/pm init …` (scaffold a brand-new tree), or `/pm plan …` (refine an existing tree in a planning session). Use this skill whenever someone wants to set up / scaffold / bootstrap a PM tree or PLAN.md, refine / groom / re-decompose / re-prioritize an existing tree, OR work on a feature (F1xxx), pick up a user story (US1xxxx), execute a task (TASK[NNN]), act as project manager, delegate stories to worker agents, update status fields or tick acceptance-criteria checkboxes in pm/E<NNN>/, create or merge git worktrees for parallel story work, surface blockers, or coordinate handoffs between agents. Trigger even when the user only mentions "PM tree", "worktree for a story", "tick the checkboxes", "claim a story", "I'm the pm", "scaffold the epic", or "groom the backlog" — those are signals to follow this skill rather than improvise.
 ---
 
-# pm — Executing a PM tree with a team of agents
+# pm — Working a PM tree (scaffold · refine · execute)
 
-Activate this skill any time you're building out an existing `pm/E<NNN>/` tree. It implements a Rally hierarchy (Epic → Feature → User Story → Task) with two roles: a long-running **PM agent** that owns a Feature, and short-lived **Worker agents** that each own one User Story.
+This skill works a Rally hierarchy (Epic → Feature → User Story → Task) stored as a tree of `CLAUDE.md` files under `pm/E<NNN>/`. It has **three modes**; pick one before doing anything else.
 
-This skill is for *execution*. If the tree doesn't exist yet, scaffold it with **/pm:init** first. If the plan needs reshaping (split stories, fix dependencies, re-phase), do that with **/pm:plan** before executing. Once a PM starts coding instead of delegating, it has lost the plot.
+## Pick the mode first
 
-`pm` is the top-level skill and owns the shared assets the whole suite depends on: the helper scripts in `scripts/` (`build-pm-html.ps1`, `set-status.ps1`) and the references in `references/` (`worktree.md`, plus `tree-structure.md` — the master templates/numbering/model/status-log spec). The `init` and `plan` sub-skills live under this skill's directory (`/pm:init`, `/pm:plan`) and reuse those same assets via `../scripts/` and `../references/`.
+Look at how the skill was invoked and what's being asked:
+
+| First token of the request | Mode | What to do |
+|---|---|---|
+| `init` (e.g. `/pm init …`), or "scaffold / bootstrap / set up a new PM tree" when none exists | **init** | Read **`references/init.md`** and follow it. Don't continue in this file. |
+| `plan` (e.g. `/pm plan …`), or "refine / groom / re-decompose / re-prioritize" an existing tree | **plan** | Read **`references/plan.md`** and follow it. Don't continue in this file. |
+| anything else (default) — "act as pm", "claim a story", "build out F1xxx" | **execute** | Continue in this file — the execution workflow below. |
+
+If the first token is literally `init` or `plan`, treat the rest of the input as that mode's brief. If there's no explicit keyword, infer the mode from intent: a tree that **doesn't exist yet** → init; reshaping a tree that **does** exist (no coding) → plan; **building the tree out** → execute. When genuinely unsure between plan and execute, ask.
+
+The other two modes live in this skill's `references/` so they share the same bundled assets — `scripts/` (`build-pm-html.ps1`, `set-status.ps1`) and `references/tree-structure.md` (the master templates / numbering / model / status-log spec). Everything below is the **execute** mode.
+
+---
+
+# Execute mode — building the tree out with a team of agents
+
+The tree has two roles: a long-running **PM agent** that owns a Feature, and short-lived **Worker agents** that each own one User Story. If the tree doesn't exist yet, switch to **init** mode first; if the plan needs reshaping, switch to **plan** mode. Once a PM starts coding instead of delegating, it has lost the plot.
 
 ## What this skill assumes you already know
 
@@ -22,7 +38,7 @@ This skill adds what those files do *not* cover: the **runtime workflow** — ho
 
 ## Tooling — the two scripts, and bootstrapping them
 
-The status and HTML workflow runs through two PowerShell scripts that live **in the target repo** at `pm/build-pm-html.ps1` and `pm/set-status.ps1`. `/pm:init` installs them there when it scaffolds a tree, so normally they're already present.
+The status and HTML workflow runs through two PowerShell scripts that live **in the target repo** at `pm/build-pm-html.ps1` and `pm/set-status.ps1`. `pm init` installs them there when it scaffolds a tree, so normally they're already present.
 
 If you're executing a tree that lacks them (a hand-built tree, or one created before the tooling existed), install them from this skill's own bundled copies before relying on the status/HTML steps:
 
@@ -104,7 +120,7 @@ Assumptions:
    c. Read the story's **Model:** line and spawn the Worker on that model — pass it as the
       Agent tool's `model` parameter (e.g. claude-sonnet-4-6 or claude-opus-4-8). If the story
       has no Model: line, default to claude-sonnet-4-6. The model is chosen per story at plan
-      time (/pm:init or /pm:plan) precisely so the PM doesn't have to judge complexity at spawn
+      time (`pm init` or `pm plan`) precisely so the PM doesn't have to judge complexity at spawn
       time — honor it. Spawn via the Agent tool (or SendMessage if continuing a named worker).
       The brief MUST include:
         - The story ID (US1xxxx) and the absolute path to its folder.
@@ -177,7 +193,7 @@ Why the discipline matters: another agent reading the file later uses `Status:` 
 pwsh -NoProfile -File pm/set-status.ps1 -Path pm/E<NNN>/F1xxx/US1xxxx/CLAUDE.md -Status "In progress" -Note "why"
 ```
 
-The `## Status log` accumulates the node's whole history — `Created` (stamped by /pm:init) → `In progress` → any intermediate state (`Blocked`) → `Done` — which is the audit trail a PM and the human read to see how a story actually progressed. Use `-Note` to record the *why* of each transition (who claimed it, what blocked it, which PR closed it). If you're making several status changes in a row, pass `-NoHtml` on all but the last to avoid regenerating the tracker repeatedly.
+The `## Status log` accumulates the node's whole history — `Created` (stamped by `pm init`) → `In progress` → any intermediate state (`Blocked`) → `Done` — which is the audit trail a PM and the human read to see how a story actually progressed. Use `-Note` to record the *why* of each transition (who claimed it, what blocked it, which PR closed it). If you're making several status changes in a row, pass `-NoHtml` on all but the last to avoid regenerating the tracker repeatedly.
 
 `set-status.ps1` only handles **status** transitions. Ticking acceptance-criteria checkboxes or editing a file's body are not status changes — make those edits directly, then run `pm/build-pm-html.ps1 -Path pm` to refresh the tracker.
 
@@ -189,7 +205,7 @@ Some PM trees ship a **static HTML tracker** mirroring the `CLAUDE.md` files: a 
 
 How to detect and regenerate:
 
-1. Check for the generator at the pm root: `pm/build-pm-html.ps1` (`/pm:init` installs it there when it scaffolds a tree; or self-install it per "Tooling — the two scripts, and bootstrapping them").
+1. Check for the generator at the pm root: `pm/build-pm-html.ps1` (`pm init` installs it there when it scaffolds a tree; or self-install it per "Tooling — the two scripts, and bootstrapping them").
 2. If it exists, after your `CLAUDE.md` edits run:
    ```
    pwsh -NoProfile -File pm/build-pm-html.ps1
@@ -229,7 +245,7 @@ The Worker pauses until unblocked. When the blocker is resolved, whoever resolve
 3. **Batch-ticking checkboxes at the end.** Tick them as you go. If the worker crashes mid-story, the next agent needs to know what's actually done.
 4. **A PM that starts coding.** Spawn a Worker. The PM's leverage is delegation, not execution.
 5. **A Worker that grabs a second story.** One Worker, one Story. If a story turns out to require new stories, surface that — don't grow scope silently.
-6. **Editing the repo root `CLAUDE.md` or `pm/PLAN.md` without explicit user direction.** Those are the design north star and the cross-feature roadmap; the PM tree is where ongoing state lives. (Reshaping `pm/PLAN.md` is `/pm:plan`'s job, not an execution-time edit.)
+6. **Editing the repo root `CLAUDE.md` or `pm/PLAN.md` without explicit user direction.** Those are the design north star and the cross-feature roadmap; the PM tree is where ongoing state lives. (Reshaping `pm/PLAN.md` is `pm plan`'s job, not an execution-time edit.)
 7. **`git merge --no-ff` by default.** Prefer fast-forward merges so the PM tree's history reads linearly. Only use `--no-ff` when the user has stated a preference for merge commits.
 8. **Forgetting to tear down a merged worktree.** Orphaned worktree dirs and dangling branches pile up across a feature and confuse future agents about what's in progress vs. done.
 9. **Editing a `CLAUDE.md` without regenerating the HTML tracker** (when one exists). The sibling `.html` and the portfolio rollups go stale and start lying about progress. Run `pm/build-pm-html.ps1` in the same turn — see "HTML tracker sync".
@@ -243,7 +259,9 @@ The Worker pauses until unblocked. When the blocker is resolved, whoever resolve
 - If you're a Worker who finished a story, did you push the branch and notify the PM?
 - If you're a PM who finished merging, did you remove the worktree and delete the branch (local + remote)?
 
-## Related skills (sub-skills of pm)
+## The other modes
 
-- **/pm:init** — scaffold a PM tree that doesn't exist yet (writes `pm/PLAN.md`, the epic charter, the F/US/TASK skeleton, installs the two helper scripts, assigns each story's `Model:`). If you activate `pm` but there's no `pm/E<NNN>/` tree, you want this first.
-- **/pm:plan** — refine an existing tree in a planning session (split stories, repair dependencies, re-phase, re-evaluate model assignments) before or between execution passes.
+This file is the **execute** mode. The other two live in `references/` and are entered by the first token of the invocation (or by inferred intent — see "Pick the mode first" at the top):
+
+- **`pm init`** → `references/init.md` — scaffold a PM tree that doesn't exist yet (writes `pm/PLAN.md`, the epic charter, the F/US/TASK skeleton, installs the two helper scripts, assigns each story's `Model:`). If you reached `pm` but there's no `pm/E<NNN>/` tree, you want this first.
+- **`pm plan`** → `references/plan.md` — refine an existing tree in a planning session (split stories, repair dependencies, re-phase, re-evaluate model assignments) before or between execution passes.

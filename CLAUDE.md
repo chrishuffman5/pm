@@ -4,42 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A Claude Code **plugin** built around one Rally-style PM-tree workflow, exposed as a top-level skill **`pm`** (execution) with two sub-skills nested inside it, **`/pm:init`** (scaffold) and **`/pm:plan`** (refine). The repo's only job is to host and deploy them — there is no application, build step, or test suite. The skill content is the product.
+A Claude Code **plugin** with a single **`pm`** skill that works a Rally-style PM tree in three **modes** — `init` (scaffold), `plan` (refine), and `execute` (default). The repo's only job is to host and deploy it — there is no application, build step, or test suite. The skill content is the product.
 
-Canonical source layout (mirrors the `domain-expert` plugin in this same `Github/` parent — which proves nested skills work: Claude Code recursively discovers every `SKILL.md` under `skills/`, and a directory can be both a skill and a container of sub-skills. Like domain-expert, `plugin.json` has **no `skills` field** — discovery is convention-based):
+Why one skill with modes (not three skills): `/pm:init`-style names are the *plugin:skill* invocation convention, which would make `init`/`plan` separate skills. Instead the user wants one skill invoked as `/pm`, `/pm init`, `/pm plan` — so `init` and `plan` are **reference prompts** the `SKILL.md` dispatches to by the first token of the request. (Like the `domain-expert` plugin, `plugin.json` has **no `skills` field** — discovery is convention-based.)
 
 ```
-skills/pm/                    ← top-level skill (pm, execution); OWNS the shared assets
-├── SKILL.md
+skills/pm/
+├── SKILL.md                 ← mode dispatch (first token → init|plan|execute) + the execute-mode workflow
 ├── scripts/{build-pm-html.ps1, set-status.ps1}
-├── references/{tree-structure.md, worktree.md}
-├── init/SKILL.md             ← /pm:init   (reaches ../scripts, ../references)
-└── plan/SKILL.md             ← /pm:plan   (reaches ../references)
+└── references/
+    ├── init.md              ← `/pm init` reference prompt (scaffold)
+    ├── plan.md              ← `/pm plan` reference prompt (refine)
+    ├── tree-structure.md    ← master templates / numbering / model heuristic / status-log spec / HTML structure
+    └── worktree.md          ← git worktree commands for the per-story workflow
 ```
 
-- `skills/pm/SKILL.md` — execution workflow (PM/Worker roles, worktrees, status discipline) **and** the owner of the shared `scripts/` + `references/`.
-- `skills/pm/references/tree-structure.md` — **the master source of truth** for file templates, numbering, model-assignment heuristic, status-log standard, working agreement, and HTML-tracker structure.
-- `skills/pm/scripts/` — `build-pm-html.ps1` (HTML tracker generator) and `set-status.ps1` (atomic status change → timestamped log → HTML regen). `/pm:init` installs both into a target repo's `pm/`; `pm` self-installs them from `${CLAUDE_SKILL_DIR}/scripts/` if a tree lacks them.
-- `skills/pm/init/SKILL.md`, `skills/pm/plan/SKILL.md` — the scaffold/refine sub-skills; they reference `../scripts/` and `../references/` (one level up into the parent `pm` skill — within the plugin, so install-safe).
+- `skills/pm/SKILL.md` — picks the mode (see its "Pick the mode first" table), then for `execute` contains the PM/Worker workflow; for `init`/`plan` it points at the matching `references/*.md`.
+- `skills/pm/references/tree-structure.md` — **the master source of truth** for file templates, numbering, model heuristic, status-log standard, working agreement, and HTML-tracker structure.
+- `skills/pm/scripts/` — `build-pm-html.ps1` (HTML tracker generator) and `set-status.ps1` (atomic status change → timestamped log → HTML regen). `init` mode installs both into a target repo's `pm/`; `execute` mode self-installs them from `${CLAUDE_SKILL_DIR}/scripts/` if a tree lacks them.
+- The reference prompts use **skill-root-relative** paths (`references/…`, `scripts/…`), since they're read with the `pm` skill's base dir as the working root.
 - `.claude-plugin/{plugin.json, marketplace.json}` — manifest + single-plugin marketplace catalog.
 
 A working copy of the original `pm` skill also lives at `C:\Users\chris\.claude\skills\pm`. This repo is the deployable copy; treat the `skills/` copies here as authoritative.
 
-## How the skill + sub-skills relate
+## The three modes
 
-Three lifecycle phases, deliberately separate so each loads only its own context and triggers on its own phrases:
+Selected by the first token of the invocation, or inferred from intent when no keyword is given:
 
-- **/pm:init** turns a design brief into a populated `pm/` tree — `pm/PLAN.md`, the epic charter, the F/US/TASK skeleton, the two installed helper scripts, and a per-story `Model:` assignment.
-- **/pm:plan** reshapes an existing tree (split stories, repair dependencies, re-phase, re-evaluate models) — additive, never renumbering, since IDs are cross-referenced as dependencies.
-- **pm** executes the tree: a long-running **PM agent** owns a Feature and only delegates; short-lived **Worker agents** each own one User Story and do the coding, **one story = one git worktree = one branch** for parallelism.
+- **`/pm init`** turns a design brief into a populated `pm/` tree — `pm/PLAN.md`, the epic charter, the F/US/TASK skeleton, the two installed helper scripts, and a per-story `Model:` assignment.
+- **`/pm plan`** reshapes an existing tree (split stories, repair dependencies, re-phase, re-evaluate models) — additive, never renumbering, since IDs are cross-referenced as dependencies.
+- **`/pm`** (default) executes the tree: a long-running **PM agent** owns a Feature and only delegates; short-lived **Worker agents** each own one User Story and do the coding, **one story = one git worktree = one branch** for parallelism.
 
 ### Ownership rule (important when editing)
 
-`pm` owns the shared assets; `init`/`plan` reuse them via `../`. The templates have **one home**: `skills/pm/references/tree-structure.md`. `/pm:init` writes them into a target repo's `pm/E<NNN>/CLAUDE.md`; at runtime `pm` and `/pm:plan` read that *seeded* copy from the target repo. So a template change starts in `tree-structure.md`. The whole `pm/` folder in a target repo is **self-contained**: `PLAN.md`, scripts, generated `index.html`, and the epic tree all live under it.
+The templates have **one home**: `skills/pm/references/tree-structure.md`. `init` mode writes them into a target repo's `pm/E<NNN>/CLAUDE.md`; at runtime `execute`/`plan` read that *seeded* copy from the target repo. So a template change starts in `tree-structure.md`. The whole `pm/` folder in a target repo is **self-contained**: `PLAN.md`, scripts, generated `index.html`, and the epic tree all live under it.
 
 ### The `Model:` contract
 
-The story `CLAUDE.md` template carries a `**Model:**` line (`claude-sonnet-4-6` default; `claude-opus-4-8` for complex stories). It flows: **/pm:init assigns it → the story file stores it → pm reads it** to choose the model when spawning that story's Worker (the Agent tool's `model` param). `/pm:plan` re-evaluates it. If you change the field name or the heuristic, update all three SKILL.md files *and* the generator (`build-pm-html.ps1` parses `**Model:**` to render a chip and strips it from the body).
+The story `CLAUDE.md` template carries a `**Model:**` line (`claude-sonnet-4-6` default; `claude-opus-4-8` for complex stories). It flows: **`init` assigns it → the story file stores it → `execute` reads it** to choose the model when spawning that story's Worker (the Agent tool's `model` param). `plan` re-evaluates it. If you change the field name or the heuristic, update `SKILL.md` + both reference prompts *and* the generator (`build-pm-html.ps1` parses `**Model:**` to render a chip and strips it from the body).
 
 ### The status-log contract
 
@@ -60,6 +62,6 @@ Plugin/skill changes only take effect in the user's **next** Claude Code session
 ## Conventions inherited from the sibling plugins
 
 - Author block and `homepage`/`repository` URLs follow the `domain-expert` plugin's format (see its `.claude-plugin/` files for the canonical shape).
-- A skill's `description` front-matter is its trigger surface — it must enumerate the phrases that should activate it, and the three descriptions must stay mutually exclusive (init = create, plan = refine, pm = execute) so the right one fires. Keep each `description` trigger list in step with what its skill actually does.
-- Sub-skill command names come from the directory name namespaced by the plugin: `skills/pm/init/` → `/pm:init`, `skills/pm/plan/` → `/pm:plan`. The dirs are deliberately bare `init`/`plan` (not `pm-init`) because the `pm:` namespace already disambiguates them from the built-in `/init`.
+- The `pm` skill's single `description` front-matter is its whole trigger surface — it must cover all three modes' phrases (scaffold/bootstrap, refine/groom, and execute/claim-a-story) so the skill fires regardless of which mode the user wants. The actual mode is then chosen inside `SKILL.md` by the first token / inferred intent.
+- Modes are invoked as `/pm`, `/pm init`, `/pm plan` (the keyword is the first argument to the one skill) — NOT `/pm:init`, which would be the plugin:skill convention for a *separate* skill. Keep `references/init.md` and `references/plan.md` as plain reference prompts (no SKILL.md frontmatter) so they aren't discovered as skills.
 - `scripts/*.ps1` target PowerShell 7+ (`pwsh`) and run on the consumer's machine, not here.
