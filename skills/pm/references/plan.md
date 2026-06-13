@@ -24,6 +24,20 @@ IDs (`F1xxx`, `US1xxxx`, `TASK[NNN]`) are referenced as dependencies all over th
 - When a story must be **split**, keep the original ID for one half and give the new work fresh IDs; update the parent feature's `## Stories` list and any `Depends on:` lines that should now point at the new IDs.
 - When work is **dropped**, mark it `Cancelled` (with a reason) rather than deleting the folder, unless the user explicitly wants it gone and you've confirmed nothing depends on it. Use the helper so the cancellation is timestamped in the log: `pwsh -NoProfile -File pm/set-status.ps1 -Path <node>/CLAUDE.md -Status "Cancelled" -Note "<why>"`.
 
+### Moving a story to a different feature (and splitting a feature)
+
+Splitting a feature usually means some of its stories should now live under a **new** feature. The new *feature* gets the next free `F1xxx` ID (its century block is now "taken"), but a **story that moves keeps its original `US1xxxx` ID** — do **not** renumber it to match the new feature's block. Renumbering is exactly what breaks `Depends on:` references, and the ID-encodes-parent convention is only a *birth-time* convenience, not an invariant you may rewrite later. So a moved story whose ID no longer matches its parent's century block is **expected and correct**, not a mistake to fix.
+
+When you move a story `US1xxxx` from `F100a` to `F100b`:
+
+1. Move the story folder (`git mv` so history follows).
+2. Update the story's `**Feature:**` line to the new feature ID.
+3. Remove it from the old feature's `## Stories` list and add it to the new feature's — keeping its real ID, even though it won't sit in numeric order there.
+4. Fix `Depends on:` lines: anything that depended on the moved story still uses its unchanged ID (no edit needed); add the new feature's own `Depends on:` if the split created a feature-level dependency.
+5. Only **new** stories created during the split get fresh IDs from the *new* feature's block (`US10b00`, `US10b01`, …).
+
+Add a one-line note in the moved story's `## Status log` (via `set-status.ps1` only if its lifecycle state actually changes; otherwise just note the move in the feature charters) so the reshape is traceable.
+
 This is why a refinement skill exists at all: reshaping a live tree safely takes more care than building a fresh one.
 
 ## What a refinement session covers
