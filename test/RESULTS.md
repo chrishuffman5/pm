@@ -22,9 +22,12 @@ the actual workspace outputs** (not trusted blind).
 - **The reference prompts are executable** — following them produced a valid tree (init), an additive reshape that respects the no-renumber rule (plan), and a logged status transition (execute).
 - **Bundled tooling fires** — `build-pm-html.ps1` ran in all four mutating scenarios; `set-status.ps1` ran in execute and produced a correct timestamped `## Status log` entry.
 
-## Findings / follow-ups (non-blocking)
-1. **Moved-story ID convention (C).** When `plan` split F1001 and moved `US10101` under the new `F1002`, the agent kept the ID `US10101` (honoring the cardinal "never renumber" rule) even though the numbering convention would suggest `US102xx` for a story under `F1002`. The agent made the safe call, but `references/plan.md` could state explicitly how to handle *moving* a story across features (keep ID vs. new ID) so the behavior isn't left to judgment.
-2. **Seed nicety.** The seed marked `F1000` `In progress` but its status log only had `Created`; the execute agent noticed and added the missing `In progress` entry. Harmless, but `setup-workspaces.sh` could seed that transition via `set-status.ps1` for realism.
+## Findings / follow-ups
+1. **Moved-story ID convention (C). — RESOLVED.** First run left the moved-story ID rule to the agent's judgment (it made the safe call but the skill didn't say so). `references/plan.md` now has an explicit "Moving a story to a different feature" recipe: a moved story keeps its original `US1xxxx` ID, only the new feature + genuinely-new stories get fresh IDs, and `Depends on:` references stay untouched. **Re-run of C confirmed**: the agent cited the rule verbatim, kept `US10101` under the new `F1002`, set `F1002 Depends on: F1001`, left `US10101 Depends on: US10100` unchanged, renumbered nothing, and regenerated 9 HTML pages — all verified on the filesystem.
+2. **Seed nicety (non-blocking).** The seed marked `F1000` `In progress` but its status log only had `Created`; the execute agent noticed and added the missing `In progress` entry. Harmless, but `setup-workspaces.sh` could seed that transition via `set-status.ps1` for realism.
+
+### Re-run log
+- **C (re-run, after plan.md tightening):** ✅ PASS — mode `plan`; read `SKILL.md → references/plan.md`; `git mv` moved `US10101`→`F1002` keeping its ID; no existing IDs renumbered; `F1002 Depends on F1001`; PLAN.md + charters + 9 HTML pages in step. The agent's report explicitly quoted plan.md's moved-story rule, confirming the guidance now drives the behavior rather than luck.
 
 ## Reproduce
 ```
