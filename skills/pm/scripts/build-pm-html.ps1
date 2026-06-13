@@ -10,9 +10,9 @@
   HTML, and emits a sibling HTML page next to every CLAUDE.md plus a portfolio
   index.html at the pm root.
 
-  pm-init installs a copy of this script into the target repo at <repo>/pm/build-pm-html.ps1
+  /pm:init installs a copy of this script into the target repo at <repo>/pm/build-pm-html.ps1
   so the project has a self-contained, project-agnostic generator. Re-run it after editing
-  any CLAUDE.md to refresh the HTML (the pm and pm-plan skills do this automatically).
+  any CLAUDE.md to refresh the HTML (the pm and /pm:plan skills do this automatically).
   Output is static, offline, dependency-free: double-click any .html.
 
 .PARAMETER Path
@@ -433,6 +433,14 @@ foreach ($e in $model) {
     $idx++
 }
 $brandHero = [System.Net.WebUtility]::HtmlEncode($ProjectName)
+# The roadmap (pm/PLAN.md) is rendered into the portfolio page so this dashboard is the single
+# overall status indicator across every epic, feature, and story.
+$planPath = Join-Path $pmDir 'PLAN.md'
+$roadmap = ''
+if (Test-Path -LiteralPath $planPath) {
+    $planHtml = Convert-Markdown (@(Get-Content -LiteralPath $planPath -Encoding utf8))
+    $roadmap = "<div class=`"section-h`">Roadmap</div><details class=`"charter`"><summary>Read PLAN.md &mdash; the cross-feature roadmap</summary><div class=`"inner prose`">$planHtml</div></details>"
+}
 $body = @"
 <div class="hero">
 <div class="eyebrow">Project tracker</div>
@@ -442,6 +450,7 @@ $body = @"
 </div>
 <div class="section-h">Epics</div>
 <div class="grid">$cards</div>
+$roadmap
 "@
 Write-Html (Join-Path $pmDir 'index.html') (Page 'Portfolio' $crumb $body)
 

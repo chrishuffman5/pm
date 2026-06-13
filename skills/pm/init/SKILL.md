@@ -1,13 +1,13 @@
 ---
-name: pm-init
-description: Scaffold a brand-new Rally-style PM tree (Epic → Feature → User Story → Task) from scratch in a repo that doesn't have one yet. Use this whenever someone wants to "set up the PM tree", "scaffold pm/E100", "bootstrap the Rally hierarchy", "build out the feature/story/task structure", "create PLAN.md and the epic charter", "lay out the planning tree for a new project", or "stand up the project tracker" — i.e. the genesis step that writes PLAN.md, the E<NNN>/CLAUDE.md charter, the F1xxx/US1xxxx/TASK folders, and the static HTML tracker. This is the create-from-nothing skill; if the tree already exists and they want to refine it use pm-plan, and if they want to execute stories with a team of agents use pm.
+name: init
+description: Scaffold a brand-new Rally-style PM tree (Epic → Feature → User Story → Task) from scratch in a repo that doesn't have one yet. Invoked as /pm:init; it is the init sub-skill of the pm plugin. Use this whenever someone wants to "set up the PM tree", "scaffold pm/E100", "bootstrap the Rally hierarchy", "build out the feature/story/task structure", "create PLAN.md and the epic charter", "lay out the planning tree for a new project", or "stand up the project tracker" — i.e. the genesis step that writes PLAN.md, the E<NNN>/CLAUDE.md charter, the F1xxx/US1xxxx/TASK folders, and the static HTML tracker. This is the create-from-nothing skill; if the tree already exists and they want to refine it use /pm:plan, and if they want to execute stories with a team of agents use the pm skill.
 ---
 
-# pm-init — Scaffold a new PM tree
+# pm:init — Scaffold a new PM tree
 
-Use this skill to turn a design brief into a fully-populated `pm/` tree: a `PLAN.md` roadmap, an epic charter, the Feature → Story → Task folder hierarchy, and a generated HTML tracker. After this runs, the `pm` skill can execute the tree and `pm-plan` can refine it.
+Use this skill to turn a design brief into a fully-populated `pm/` tree: a `PLAN.md` roadmap, an epic charter, the Feature → Story → Task folder hierarchy, and a generated HTML tracker. After this runs, the `pm` skill can execute the tree and `/pm:plan` can refine it. This skill lives inside the `pm` skill's directory and uses its bundled assets (`../references/`, `../scripts/`).
 
-The layout, file templates, numbering scheme, model-assignment rules, working agreement, and HTML-tracker details all live in **`references/tree-structure.md`** — read it once at the start; it is the contract everything downstream depends on. This SKILL.md is the *procedure* for laying the tree down.
+The layout, file templates, numbering scheme, model-assignment rules, working agreement, and HTML-tracker details all live in **`../references/tree-structure.md`** — read it once at the start; it is the contract everything downstream depends on. This SKILL.md is the *procedure* for laying the tree down.
 
 ## Before you scaffold: gather the inputs
 
@@ -25,7 +25,7 @@ Don't invent domain facts to fill gaps. If a feature's scope is genuinely unclea
 ```
 1. Read references/tree-structure.md. Confirm the numbering scheme and templates.
 
-2. Write PLAN.md at the repo root.
+2. Write pm/PLAN.md (inside the pm/ folder — it is rendered into the portfolio dashboard).
    - Epic summary, the feature catalog (table: ID | Feature | Phase | #stories | folder),
      and the phase + dependency graph (which features run in parallel, what blocks what).
    - This is the cross-feature roadmap; the epic charter points back to it.
@@ -60,28 +60,28 @@ Scaffolding a large tree is a lot of nearly-identical file writes. That's expect
 
 ## Model assignment — call out the right model per story
 
-Each story's `**Model:**` line tells the `pm` skill which model to spawn its Worker on. Default to **`claude-sonnet-4-6`**; bump to **`claude-opus-4-8`** for stories with architectural decisions, ambiguous acceptance criteria, algorithmic/scoring logic, cross-cutting changes, or security-sensitive work. The task `Effort:` ratings are a good proxy — mostly S/M → Sonnet, several L or a foundational story → Opus. Full rationale and the heuristic are in `references/tree-structure.md`.
+Each story's `**Model:**` line tells the `pm` skill which model to spawn its Worker on. Default to **`claude-sonnet-4-6`**; bump to **`claude-opus-4-8`** for stories with architectural decisions, ambiguous acceptance criteria, algorithmic/scoring logic, cross-cutting changes, or security-sensitive work. The task `Effort:` ratings are a good proxy — mostly S/M → Sonnet, several L or a foundational story → Opus. Full rationale and the heuristic are in `../references/tree-structure.md`.
 
 Bias toward the Sonnet default — the model isn't load-bearing for correctness (a story that turns out harder than expected can be re-run on Opus), so reserve Opus for stories that genuinely need the extra reasoning. **After scaffolding, list the stories you bumped to Opus** so the user can sanity-check the calls in one place.
 
 ## HTML tracker
 
-The tree ships a static HTML mirror generated from the `CLAUDE.md` files. Two helper scripts are bundled with this skill at `scripts/`. As the initializer, you own installing both into the project so the `pm` and `pm-plan` skills can re-run them:
+The tree ships a static HTML mirror generated from the `CLAUDE.md` files. The two helper scripts are owned by the parent `pm` skill and live at `../scripts/` (relative to this skill). As the initializer, you copy both into the project so all three skills can re-run them from the repo:
 
 ```
-1. Copy scripts/build-pm-html.ps1 to <repo>/pm/build-pm-html.ps1   (the HTML generator)
-   Copy scripts/set-status.ps1    to <repo>/pm/set-status.ps1       (the status-change helper)
+1. Copy ../scripts/build-pm-html.ps1 to <repo>/pm/build-pm-html.ps1   (the HTML generator)
+   Copy ../scripts/set-status.ps1    to <repo>/pm/set-status.ps1       (the status-change helper)
 2. Generate the tracker:
    pwsh -NoProfile -File <repo>/pm/build-pm-html.ps1 -Path <repo>/pm -ProjectName "<Project>" -Lede "<tagline>"
 ```
 
 `set-status.ps1` is what later agents call to move a node's status — it rewrites `Status:`, stamps the timestamped `## Status log` entry, bumps `Last updated:`, and regenerates the HTML in one atomic call (`pwsh -NoProfile -File pm/set-status.ps1 -Path <node>/CLAUDE.md -Status "In progress"`). Installing it now is what makes that workflow available downstream.
 
-`-ProjectName` brands every page; `-Lede` is the portfolio subtitle. The generator parses each `CLAUDE.md`'s `Status:` and acceptance-criteria checkboxes to compute rollups, so the tracker is only as accurate as the files. `CLAUDE.md` is the single source of truth — never hand-edit the generated `.html`. For the structure and a real example to model output on, see the "HTML tracker" section of `references/tree-structure.md` (`C:\Users\chris\Github\winnie\pm` is a complete reference tree).
+`-ProjectName` brands every page; `-Lede` is the portfolio subtitle. The generator parses each `CLAUDE.md`'s `Status:` and acceptance-criteria checkboxes to compute rollups, so the tracker is only as accurate as the files. `CLAUDE.md` is the single source of truth — never hand-edit the generated `.html`. For the structure and a real example to model output on, see the "HTML tracker" section of `../references/tree-structure.md` (`C:\Users\chris\Github\winnie\pm` is a complete reference tree).
 
 ## Verify the tree
 
-Before reporting done, run the file-count and structural checks from `references/tree-structure.md`:
+Before reporting done, run the file-count and structural checks from `../references/tree-structure.md`:
 
 - Markdown count = 1 epic charter + (feature charters) + (story charters) + (task files).
 - Every `F1xxx/` has a `CLAUDE.md`; every `US1xxxx/` has a `CLAUDE.md` and at least `TASK001.md`.
@@ -101,5 +101,5 @@ Before reporting done, run the file-count and structural checks from `references
 
 ## Related skills
 
-- **pm-plan** — once the tree exists, refine it: re-decompose stories, repair dependency graphs, re-balance phases, re-evaluate model assignments.
+- **/pm:plan** — once the tree exists, refine it: re-decompose stories, repair dependency graphs, re-balance phases, re-evaluate model assignments.
 - **pm** — execute the tree: a PM agent spawns Worker agents (on each story's assigned model) in git worktrees to build the stories out.
