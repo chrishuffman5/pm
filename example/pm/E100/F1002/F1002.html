@@ -1,0 +1,191 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1002 &middot; pm — Claude Code skill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>:root{
+ --ink:#0e0f13;--ink2:#14161c;--surface:#181b22;--surface2:#1e222b;
+ --line:#2a2f3a;--line2:#384050;--text:#e9eaee;--muted:#9aa0ab;--faint:#6b7280;
+ --gold:#e8b14c;--gold-bright:#f4cd7e;--gold-dim:#b9893a;
+ --done:#5fb87a;--wip:#e8b14c;--todo:#6b7280;
+ --mono:'JetBrains Mono','Cascadia Mono','Consolas',ui-monospace,monospace;
+ --serif:'Fraunces','Georgia','Hoefler Text',serif;
+ --sans:system-ui,'Segoe UI',-apple-system,sans-serif;
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.6;
+ background-image:radial-gradient(1200px 520px at 82% -12%,rgba(232,177,76,.10),transparent 60%),
+  linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+ background-size:auto,44px 44px,44px 44px;background-attachment:fixed;}
+a{color:var(--gold);text-decoration:none}a:hover{color:var(--gold-bright)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px 40px}
+.topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(9px);
+ background:linear-gradient(180deg,rgba(14,15,19,.94),rgba(14,15,19,.74));border-bottom:1px solid var(--line)}
+.topbar .wrap{padding:13px 28px;display:flex;align-items:center;gap:16px}
+.brand{font-family:var(--mono);font-weight:700;letter-spacing:.22em;text-transform:uppercase;font-size:12.5px;color:var(--gold);white-space:nowrap}
+.brand .sp{color:var(--faint);margin-left:2px}
+.crumb{font-family:var(--mono);font-size:12.5px;color:var(--muted);display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.crumb a{color:var(--muted)}.crumb a:hover{color:var(--gold)}.crumb .sep{color:var(--gold-dim)}.crumb .cur{color:var(--text)}
+.hero{padding:54px 0 32px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-dim)}
+.title{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,52px);line-height:1.04;margin:.22em 0 .05em;letter-spacing:-.012em}
+.lede{color:var(--muted);max-width:60ch;margin:.4em 0 0}
+.metarow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:20px}
+.badge{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;border-radius:999px;border:1px solid var(--line2);display:inline-flex;gap:7px;align-items:center;color:#aab0bb}
+.badge .ico{width:7px;height:7px;border-radius:50%;background:var(--todo)}
+.badge.done{color:#bfe9cd;border-color:rgba(95,184,122,.40);background:rgba(95,184,122,.08)}.badge.done .ico{background:var(--done)}
+.badge.wip{color:#f6dca2;border-color:rgba(232,177,76,.42);background:rgba(232,177,76,.09)}.badge.wip .ico{background:var(--wip);animation:pulse 2s infinite}
+.badge.todo .ico{background:var(--todo)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,177,76,.5)}70%{box-shadow:0 0 0 6px rgba(232,177,76,0)}100%{box-shadow:0 0 0 0 rgba(232,177,76,0)}}
+.chip{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding:5px 11px;border:1px solid var(--line);border-radius:999px}
+.chip b{color:var(--text);font-weight:500}
+.bar{height:8px;border-radius:6px;background:var(--surface2);border:1px solid var(--line);overflow:hidden}
+.bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:6px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.bigprog{margin-top:24px;max-width:540px}
+.bigprog .lab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:8px}
+.bigprog .lab b{color:var(--gold);font-weight:500}
+.section-h{font-family:var(--mono);text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:var(--faint);margin:46px 0 18px;display:flex;align-items:center;gap:14px}
+.section-h::after{content:"";height:1px;flex:1;background:var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(304px,1fr));gap:16px}
+.card{display:block;background:linear-gradient(180deg,var(--surface),var(--ink2));border:1px solid var(--line);border-radius:14px;padding:20px 20px 18px;position:relative;overflow:hidden;opacity:0;transform:translateY(10px);animation:rise .6s forwards}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--todo)}
+.card.done::before{background:var(--done)}.card.wip::before{background:var(--wip)}.card.todo::before{background:var(--todo)}
+.card:hover{border-color:var(--line2);transform:translateY(3px);box-shadow:0 20px 44px -24px rgba(0,0,0,.85)}
+.card .cid{font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:.06em}
+.card .ctitle{font-family:var(--serif);font-size:21px;font-weight:600;margin:6px 0 0;line-height:1.13;color:var(--text)}
+.card .cfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+.card .cnt{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+@keyframes rise{to{opacity:1;transform:none}}
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{display:grid;grid-template-columns:104px 1fr auto;gap:18px;align-items:center;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:11px;opacity:0;transform:translateY(8px);animation:rise .5s forwards}
+.row:hover{border-color:var(--line2);background:var(--surface2)}
+.row .rid{font-family:var(--mono);font-size:13px;color:var(--gold)}
+.row .rtitle{font-size:15px;color:var(--text)}
+.row .rmeta{display:flex;align-items:center;gap:16px;justify-self:end}
+.row .acmini{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.row .bar{width:120px}
+.prose{padding-top:8px;font-size:15.5px;color:#d7dade}
+.prose h2{font-family:var(--serif);font-size:25px;font-weight:600;margin:40px 0 12px;color:var(--text);letter-spacing:-.01em}
+.prose h3{font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;font-size:12.5px;color:var(--gold-dim);margin:30px 0 10px}
+.prose p{margin:12px 0;color:#cfd3da}
+.prose ul{list-style:none;padding-left:0;margin:12px 0}
+.prose ul.sub{padding-left:24px;margin:4px 0}
+.prose li{position:relative;padding-left:22px;margin:7px 0;color:#cfd3da}
+.prose li::before{content:"\25B8";position:absolute;left:3px;top:1px;color:var(--gold-dim);font-size:12px}
+.prose li.ac{padding-left:32px}.prose li.ac::before{content:none}
+.prose li.ac .box{position:absolute;left:0;top:3px;width:17px;height:17px;border:1px solid var(--line2);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+.prose li.ac.done .box{background:rgba(95,184,122,.16);border-color:var(--done);color:var(--done)}
+.prose li.ac.done>span:last-child{color:#9fb6a6}
+.prose code{font-family:var(--mono);font-size:.86em;background:var(--surface2);border:1px solid var(--line);padding:1.5px 6px;border-radius:5px;color:var(--gold-bright)}
+.prose pre{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto;margin:16px 0}
+.prose pre code{background:none;border:none;padding:0;color:#cdd2da;font-size:13px;line-height:1.55}
+.prose blockquote{border-left:3px solid var(--gold-dim);margin:16px 0;padding:4px 0 4px 18px;color:var(--muted);font-style:italic}
+.prose table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+.prose th{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;text-align:left;color:var(--gold-dim);border-bottom:1px solid var(--line2);padding:9px 12px}
+.prose td{border-bottom:1px solid var(--line);padding:9px 12px;color:#cfd3da;vertical-align:top}
+.prose tr:hover td{background:var(--surface)}
+.prose hr{border:none;border-top:1px solid var(--line);margin:26px 0}
+.prose a{border-bottom:1px solid rgba(232,177,76,.28)}
+.charter{margin-top:8px;border:1px solid var(--line);border-radius:14px;background:rgba(20,22,28,.5);overflow:hidden}
+.charter>summary{cursor:pointer;list-style:none;padding:18px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:12px}
+.charter>summary::-webkit-details-marker{display:none}
+.charter>summary::before{content:"\25B6";color:var(--gold-dim);font-size:11px;transition:transform .2s}
+.charter[open]>summary::before{transform:rotate(90deg)}
+.charter>summary:hover{color:var(--gold)}
+.charter .inner{padding:4px 24px 28px;border-top:1px solid var(--line)}
+.sibs{display:flex;justify-content:space-between;gap:14px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line)}
+.sib{flex:1;max-width:49%;font-family:var(--mono);font-size:13px;padding:14px 16px;border:1px solid var(--line);border-radius:11px;color:var(--muted)}
+.sib:hover{border-color:var(--line2);color:var(--text)}
+.sib .dir{font-size:10.5px;color:var(--faint);letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+.sib.next{text-align:right}.sib.disabled{opacity:.28;pointer-events:none}
+.foot{margin-top:54px;padding-top:22px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.legend{display:flex;gap:18px;flex-wrap:wrap}.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.i-done{background:var(--done)}.i-wip{background:var(--wip)}.i-todo{background:var(--todo)}</style></head>
+<body>
+<div class="topbar"><div class="wrap"><span class="brand">pm — Claude Code skill<span class="sp">//</span></span><nav class="crumb"><a href="../../index.html">Portfolio</a><span class="sep">&rsaquo;</span><a href="../E100.html">E100</a><span class="sep">&rsaquo;</span><span class="cur">F1002</span></nav></div></div>
+<div class="wrap">
+<div class="hero">
+<div class="eyebrow">Feature &middot; F1002</div>
+<h1 class="title">F1002 — Tooling & status tracking</h1>
+<div class="metarow"><span class="badge done"><i class="ico"></i>Done</span><span class="chip">phase <b>2</b></span><span class="chip">depends&nbsp;on <b>F1000</b></span><span class="chip">updated <b>2026-06-12</b></span><span class="chip">created <b>2026-06-10T18:15Z</b></span><span class="chip">started <b>2026-06-11T10:00Z</b></span><span class="chip">done <b>2026-06-12T15:00Z</b></span></div>
+<div class="bigprog"><div class="lab"><span>Story completion</span><span><b>4</b> / 4 done</span></div><div class="bar"><span style="width:100%"></span></div></div>
+</div>
+<div class="section-h">User stories &middot; 4</div>
+<div class="rows"><a class="row" href="US10200/US10200.html" style="animation-delay:0.00s">
+<span class="rid">US10200</span><span class="rtitle">US10200 — HTML tracker generator (build-pm-html.ps1)</span>
+<span class="rmeta"><span class="acmini">3/3 AC</span><span class="badge done"><i class="ico"></i>Done</span></span></a><a class="row" href="US10201/US10201.html" style="animation-delay:0.04s">
+<span class="rid">US10201</span><span class="rtitle">US10201 — Parameterize generator branding</span>
+<span class="rmeta"><span class="acmini">3/3 AC</span><span class="badge done"><i class="ico"></i>Done</span></span></a><a class="row" href="US10202/US10202.html" style="animation-delay:0.08s">
+<span class="rid">US10202</span><span class="rtitle">US10202 — Status-log standard + set-status.ps1</span>
+<span class="rmeta"><span class="acmini">3/3 AC</span><span class="badge done"><i class="ico"></i>Done</span></span></a><a class="row" href="US10203/US10203.html" style="animation-delay:0.12s">
+<span class="rid">US10203</span><span class="rtitle">US10203 — PLAN.md → dashboard rendering</span>
+<span class="rmeta"><span class="acmini">3/3 AC</span><span class="badge done"><i class="ico"></i>Done</span></span></a></div>
+<div class="section-h">Feature charter</div>
+<div class="prose"><h2>Purpose</h2>
+<p>Build the self-contained tooling the PM tree ships with: a static HTML tracker generator (<code>build-pm-html.ps1</code>) that parses the <code>CLAUDE.md</code> tree into a dependency-free dashboard, and a status-log helper (<code>set-status.ps1</code>) that makes every status change atomic — rewrite <code>Status:</code>, bump <code>Last updated:</code>, append a timestamped <code>## Status log</code> entry, and regenerate the HTML in one call. Round it out by rendering <code>pm/PLAN.md</code> into the portfolio page so the roadmap and the live rollups sit on one dashboard.</p>
+<h2>In scope</h2>
+<ul>
+<li><code>skills/pm/scripts/build-pm-html.ps1</code> — walks the <code>pm/E&lt;NNN&gt;</code> tree, renders the template</li>
+</ul>
+<p>  Markdown subset to HTML, rolls up status and acceptance-criteria progress, and emits a   portfolio <code>index.html</code> plus a page per epic/feature/story.</p>
+<ul>
+<li>An offline, dependency-free dark theme for the generated pages.</li>
+<li><code>-ProjectName</code> / <code>-Lede</code> parameters so the generator carries no hardcoded branding.</li>
+<li>The <code>## Status log</code> format standard and <code>skills/pm/scripts/set-status.ps1</code>, which writes it</li>
+</ul>
+<p>  atomically and re-runs the generator.</p>
+<ul>
+<li>Created/started/done timeline chips derived from the status log.</li>
+<li>Reading <code>pm/PLAN.md</code> and embedding it as the Roadmap section of <code>index.html</code>.</li>
+</ul>
+<h2>Out of scope</h2>
+<ul>
+<li>The lifecycle mode workflows that *call* this tooling (Feature F1001).</li>
+<li>The Epic/Feature/Story/Task templates and numbering the generator parses (Feature F1000).</li>
+<li>Agent-driven validation and the public release (Feature F1003).</li>
+</ul>
+<h2>Acceptance criteria (feature-level)</h2>
+<ul>
+<li class="ac done"><span class="box">&#10003;</span><span><code>build-pm-html.ps1</code> emits a portfolio <code>index.html</code> plus one page per epic/feature/story node.</span></li>
+<li class="ac done"><span class="box">&#10003;</span><span><code>set-status.ps1</code> stamps a timestamped status-log entry, rewrites <code>Status:</code>/<code>Last updated:</code>, and regenerates the HTML in one call.</span></li>
+<li class="ac done"><span class="box">&#10003;</span><span><code>pm/PLAN.md</code> renders into the portfolio page as the Roadmap section.</span></li>
+</ul>
+<h2>Stories</h2>
+<ul>
+<li>US10200 — HTML tracker generator (build-pm-html.ps1) — Status: Done</li>
+<li>US10201 — Parameterize generator branding — Status: Done</li>
+<li>US10202 — Status-log standard + set-status.ps1 — Status: Done</li>
+<li>US10203 — PLAN.md → dashboard rendering — Status: Done</li>
+</ul>
+<h2>Key design notes</h2>
+<ul>
+<li><code>CLAUDE.md</code> is always the single source of truth; the HTML is derived and never hand-edited,</li>
+</ul>
+<p>  so the generator can be re-run idempotently at any time.</p>
+<ul>
+<li>The generator and the helper share one contract: the <code>## Status log</code> format. <code>set-status.ps1</code></li>
+</ul>
+<p>  writes it; <code>build-pm-html.ps1</code>'s <code>Get-Meta</code> parses it (tolerating <code>-</code>, en-, and em-dashes) into   created/started/done chips. Change one side and the other must follow.</p>
+<ul>
+<li>The tooling is fully offline — no CDN, no JS framework, inline CSS — so a tree clicks through</li>
+</ul>
+<p>  from a file share or GitHub Pages with zero install.</p>
+<ul>
+<li>Branding is parameterized (<code>-ProjectName</code>, <code>-Lede</code>) with sensible fallbacks (repo folder name /</li>
+</ul>
+<p>  generic tagline) so the generator is reusable across any project, not just this one.</p>
+<h2>Open questions</h2>
+<ul>
+<li>None remaining — all resolved during the build (see story notes).</li>
+</ul>
+<h2>Status log</h2>
+<ul>
+<li>2026-06-10T18:15Z — Created</li>
+<li>2026-06-11T10:00Z — In progress</li>
+<li>2026-06-12T15:00Z — Done</li>
+</ul>
+</div>
+<div class="sibs"><a class="sib prev" href="../F1001/F1001.html"><div class="dir">&larr; Prev feature</div>F1001 &middot; F1001 — Lifecycle modes (init · plan · execute)</a><a class="sib next" href="../F1003/F1003.html"><div class="dir">Next feature &rarr;</div>F1003 &middot; F1003 — Validation & open-source release</a></div>
+<div class="foot"><span>pm — Claude Code skill pm tracker &middot; generated from CLAUDE.md</span><div class="legend"><span><i class="i-done"></i>Done</span><span><i class="i-wip"></i>In&nbsp;progress</span><span><i class="i-todo"></i>Not&nbsp;started</span></div></div>
+</div></body></html>

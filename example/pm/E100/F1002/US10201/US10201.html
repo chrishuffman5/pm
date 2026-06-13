@@ -1,0 +1,145 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>US10201 &middot; pm — Claude Code skill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>:root{
+ --ink:#0e0f13;--ink2:#14161c;--surface:#181b22;--surface2:#1e222b;
+ --line:#2a2f3a;--line2:#384050;--text:#e9eaee;--muted:#9aa0ab;--faint:#6b7280;
+ --gold:#e8b14c;--gold-bright:#f4cd7e;--gold-dim:#b9893a;
+ --done:#5fb87a;--wip:#e8b14c;--todo:#6b7280;
+ --mono:'JetBrains Mono','Cascadia Mono','Consolas',ui-monospace,monospace;
+ --serif:'Fraunces','Georgia','Hoefler Text',serif;
+ --sans:system-ui,'Segoe UI',-apple-system,sans-serif;
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.6;
+ background-image:radial-gradient(1200px 520px at 82% -12%,rgba(232,177,76,.10),transparent 60%),
+  linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+ background-size:auto,44px 44px,44px 44px;background-attachment:fixed;}
+a{color:var(--gold);text-decoration:none}a:hover{color:var(--gold-bright)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px 40px}
+.topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(9px);
+ background:linear-gradient(180deg,rgba(14,15,19,.94),rgba(14,15,19,.74));border-bottom:1px solid var(--line)}
+.topbar .wrap{padding:13px 28px;display:flex;align-items:center;gap:16px}
+.brand{font-family:var(--mono);font-weight:700;letter-spacing:.22em;text-transform:uppercase;font-size:12.5px;color:var(--gold);white-space:nowrap}
+.brand .sp{color:var(--faint);margin-left:2px}
+.crumb{font-family:var(--mono);font-size:12.5px;color:var(--muted);display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.crumb a{color:var(--muted)}.crumb a:hover{color:var(--gold)}.crumb .sep{color:var(--gold-dim)}.crumb .cur{color:var(--text)}
+.hero{padding:54px 0 32px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-dim)}
+.title{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,52px);line-height:1.04;margin:.22em 0 .05em;letter-spacing:-.012em}
+.lede{color:var(--muted);max-width:60ch;margin:.4em 0 0}
+.metarow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:20px}
+.badge{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;border-radius:999px;border:1px solid var(--line2);display:inline-flex;gap:7px;align-items:center;color:#aab0bb}
+.badge .ico{width:7px;height:7px;border-radius:50%;background:var(--todo)}
+.badge.done{color:#bfe9cd;border-color:rgba(95,184,122,.40);background:rgba(95,184,122,.08)}.badge.done .ico{background:var(--done)}
+.badge.wip{color:#f6dca2;border-color:rgba(232,177,76,.42);background:rgba(232,177,76,.09)}.badge.wip .ico{background:var(--wip);animation:pulse 2s infinite}
+.badge.todo .ico{background:var(--todo)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,177,76,.5)}70%{box-shadow:0 0 0 6px rgba(232,177,76,0)}100%{box-shadow:0 0 0 0 rgba(232,177,76,0)}}
+.chip{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding:5px 11px;border:1px solid var(--line);border-radius:999px}
+.chip b{color:var(--text);font-weight:500}
+.bar{height:8px;border-radius:6px;background:var(--surface2);border:1px solid var(--line);overflow:hidden}
+.bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:6px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.bigprog{margin-top:24px;max-width:540px}
+.bigprog .lab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:8px}
+.bigprog .lab b{color:var(--gold);font-weight:500}
+.section-h{font-family:var(--mono);text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:var(--faint);margin:46px 0 18px;display:flex;align-items:center;gap:14px}
+.section-h::after{content:"";height:1px;flex:1;background:var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(304px,1fr));gap:16px}
+.card{display:block;background:linear-gradient(180deg,var(--surface),var(--ink2));border:1px solid var(--line);border-radius:14px;padding:20px 20px 18px;position:relative;overflow:hidden;opacity:0;transform:translateY(10px);animation:rise .6s forwards}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--todo)}
+.card.done::before{background:var(--done)}.card.wip::before{background:var(--wip)}.card.todo::before{background:var(--todo)}
+.card:hover{border-color:var(--line2);transform:translateY(3px);box-shadow:0 20px 44px -24px rgba(0,0,0,.85)}
+.card .cid{font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:.06em}
+.card .ctitle{font-family:var(--serif);font-size:21px;font-weight:600;margin:6px 0 0;line-height:1.13;color:var(--text)}
+.card .cfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+.card .cnt{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+@keyframes rise{to{opacity:1;transform:none}}
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{display:grid;grid-template-columns:104px 1fr auto;gap:18px;align-items:center;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:11px;opacity:0;transform:translateY(8px);animation:rise .5s forwards}
+.row:hover{border-color:var(--line2);background:var(--surface2)}
+.row .rid{font-family:var(--mono);font-size:13px;color:var(--gold)}
+.row .rtitle{font-size:15px;color:var(--text)}
+.row .rmeta{display:flex;align-items:center;gap:16px;justify-self:end}
+.row .acmini{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.row .bar{width:120px}
+.prose{padding-top:8px;font-size:15.5px;color:#d7dade}
+.prose h2{font-family:var(--serif);font-size:25px;font-weight:600;margin:40px 0 12px;color:var(--text);letter-spacing:-.01em}
+.prose h3{font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;font-size:12.5px;color:var(--gold-dim);margin:30px 0 10px}
+.prose p{margin:12px 0;color:#cfd3da}
+.prose ul{list-style:none;padding-left:0;margin:12px 0}
+.prose ul.sub{padding-left:24px;margin:4px 0}
+.prose li{position:relative;padding-left:22px;margin:7px 0;color:#cfd3da}
+.prose li::before{content:"\25B8";position:absolute;left:3px;top:1px;color:var(--gold-dim);font-size:12px}
+.prose li.ac{padding-left:32px}.prose li.ac::before{content:none}
+.prose li.ac .box{position:absolute;left:0;top:3px;width:17px;height:17px;border:1px solid var(--line2);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+.prose li.ac.done .box{background:rgba(95,184,122,.16);border-color:var(--done);color:var(--done)}
+.prose li.ac.done>span:last-child{color:#9fb6a6}
+.prose code{font-family:var(--mono);font-size:.86em;background:var(--surface2);border:1px solid var(--line);padding:1.5px 6px;border-radius:5px;color:var(--gold-bright)}
+.prose pre{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto;margin:16px 0}
+.prose pre code{background:none;border:none;padding:0;color:#cdd2da;font-size:13px;line-height:1.55}
+.prose blockquote{border-left:3px solid var(--gold-dim);margin:16px 0;padding:4px 0 4px 18px;color:var(--muted);font-style:italic}
+.prose table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+.prose th{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;text-align:left;color:var(--gold-dim);border-bottom:1px solid var(--line2);padding:9px 12px}
+.prose td{border-bottom:1px solid var(--line);padding:9px 12px;color:#cfd3da;vertical-align:top}
+.prose tr:hover td{background:var(--surface)}
+.prose hr{border:none;border-top:1px solid var(--line);margin:26px 0}
+.prose a{border-bottom:1px solid rgba(232,177,76,.28)}
+.charter{margin-top:8px;border:1px solid var(--line);border-radius:14px;background:rgba(20,22,28,.5);overflow:hidden}
+.charter>summary{cursor:pointer;list-style:none;padding:18px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:12px}
+.charter>summary::-webkit-details-marker{display:none}
+.charter>summary::before{content:"\25B6";color:var(--gold-dim);font-size:11px;transition:transform .2s}
+.charter[open]>summary::before{transform:rotate(90deg)}
+.charter>summary:hover{color:var(--gold)}
+.charter .inner{padding:4px 24px 28px;border-top:1px solid var(--line)}
+.sibs{display:flex;justify-content:space-between;gap:14px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line)}
+.sib{flex:1;max-width:49%;font-family:var(--mono);font-size:13px;padding:14px 16px;border:1px solid var(--line);border-radius:11px;color:var(--muted)}
+.sib:hover{border-color:var(--line2);color:var(--text)}
+.sib .dir{font-size:10.5px;color:var(--faint);letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+.sib.next{text-align:right}.sib.disabled{opacity:.28;pointer-events:none}
+.foot{margin-top:54px;padding-top:22px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.legend{display:flex;gap:18px;flex-wrap:wrap}.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.i-done{background:var(--done)}.i-wip{background:var(--wip)}.i-todo{background:var(--todo)}</style></head>
+<body>
+<div class="topbar"><div class="wrap"><span class="brand">pm — Claude Code skill<span class="sp">//</span></span><nav class="crumb"><a href="../../../index.html">Portfolio</a><span class="sep">&rsaquo;</span><a href="../../E100.html">E100</a><span class="sep">&rsaquo;</span><a href="../F1002.html">F1002</a><span class="sep">&rsaquo;</span><span class="cur">US10201</span></nav></div></div>
+<div class="wrap">
+<div class="hero">
+<div class="eyebrow">User story &middot; US10201</div>
+<h1 class="title">US10201 — Parameterize generator branding</h1>
+<div class="metarow"><span class="badge done"><i class="ico"></i>Done</span><span class="chip">model <b>claude-sonnet-4-6</b></span><span class="chip">depends&nbsp;on <b>US10200</b></span><span class="chip">updated <b>2026-06-12</b></span><span class="chip">created <b>2026-06-10T18:15Z</b></span><span class="chip">started <b>2026-06-12T09:00Z</b></span><span class="chip">done <b>2026-06-12T10:30Z</b></span></div>
+<div class="bigprog"><div class="lab"><span>Acceptance criteria</span><span><b>3</b> / 3 ticked</span></div><div class="bar"><span style="width:100%"></span></div></div>
+</div>
+<div class="prose"><h2>User value</h2>
+<p>As a user running the generator on my own project, I want the title and subtitle to reflect my project rather than hardcoded branding so that the dashboard reads as mine and the generator is reusable across any repo, not just the one it was first written in.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li class="ac done"><span class="box">&#10003;</span><span><code>build-pm-html.ps1</code> accepts <code>-ProjectName</code> and <code>-Lede</code> parameters that set the brand/title</span></li>
+</ul>
+<p>  and the portfolio subtitle across all generated pages.</p>
+<ul>
+<li class="ac done"><span class="box">&#10003;</span><span>When <code>-ProjectName</code> is omitted it defaults to the repo (target) folder name; <code>-Lede</code> falls</span></li>
+</ul>
+<p>  back to a generic tagline.</p>
+<ul>
+<li class="ac done"><span class="box">&#10003;</span><span>No project-specific branding strings remain hardcoded anywhere in the generator.</span></li>
+</ul>
+<h2>Tasks</h2>
+<ul>
+<li>TASK001 — Add -ProjectName / -Lede params</li>
+<li>TASK002 — Default ProjectName to the repo folder name</li>
+<li>TASK003 — Remove hardcoded project branding</li>
+</ul>
+<h2>Verification</h2>
+<p>Run the generator with <code>-ProjectName "Acme"</code> and <code>-Lede "roadmap"</code> and confirm both appear across <code>index.html</code> and the node pages. Run it again with no branding params and confirm the title falls back to the <code>pm</code> parent folder name and a generic subtitle. Grep the script for any leftover hardcoded project name — there should be none.</p>
+<h2>Status log</h2>
+<ul>
+<li>2026-06-10T18:15Z — Created</li>
+<li>2026-06-12T09:00Z — In progress</li>
+<li>2026-06-12T10:30Z — Done</li>
+</ul>
+</div>
+<div class="sibs"><a class="sib prev" href="../US10200/US10200.html"><div class="dir">&larr; Prev story</div>US10200</a><a class="sib next" href="../US10202/US10202.html"><div class="dir">Next story &rarr;</div>US10202</a></div>
+<div class="foot"><span>pm — Claude Code skill pm tracker &middot; generated from CLAUDE.md</span><div class="legend"><span><i class="i-done"></i>Done</span><span><i class="i-wip"></i>In&nbsp;progress</span><span><i class="i-todo"></i>Not&nbsp;started</span></div></div>
+</div></body></html>

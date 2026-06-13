@@ -1,5 +1,7 @@
 # pm — Rally-style PM tree plugin
 
+> 📊 **[Live example dashboard →](https://chrishuffman5.github.io/pm/)** — a worked PM tree, rendered by the skill's own tooling, showing how `pm` plans and executes project development. (The example tree under [`example/`](example/) documents how this very skill was built.)
+
 A Claude Code plugin with a single **`pm`** skill for working a **Rally hierarchy** (Epic → Feature → User Story → Task) stored as a tree of `CLAUDE.md` files under `pm/E<NNN>/`. The skill has **three modes**, selected by the first token of the invocation (or inferred from intent).
 
 The workflow was originally authored for the [`landfinder`](https://github.com/chrishuffman5/landfinder) repo's `pm/E100/` tree but applies to any repo laid out the same way.
