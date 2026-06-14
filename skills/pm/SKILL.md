@@ -1,7 +1,21 @@
 ---
 name: pm
-description: Manage a software project as a file-based Rally tree — CLAUDE.md files under the repo's pm/E<NNN>/ (Epic → Feature → User Story → Task). Three invocations: `/pm init` scaffolds a new pm/ tree from a brief (PLAN.md + epic charter + feature/story/task folders); `/pm plan` refines an existing tree (split stories, fix dependencies, re-phase, groom the backlog, re-prioritize, sharpen acceptance criteria); `/pm` executes it (act as PM for a feature, claim a user story, run tasks, tick acceptance criteria, drive git-worktree-per-story, delegate to worker agents, log status, surface blockers). Use it for anything touching a pm/E<NNN> tree or epics/features/stories/tasks-kept-as-files: "scaffold the PM tree", "groom the backlog", "act as pm for F1xxx", "claim a story", "tick the checkboxes". Not for generic or agile project planning, personal to-do lists, status reports, external PM tools (Jira/Trello/Linear), or code scaffolding (`npm init`, app generators).
+description: "Manage a software project as a file-based Rally tree — CLAUDE.md files under the repo's pm/E<NNN>/ (Epic → Feature → User Story → Task). Three invocations: `/pm init` scaffolds a new pm/ tree from a brief (PLAN.md + epic charter + feature/story/task folders); `/pm plan` refines an existing tree (split stories, fix dependencies, re-phase, groom the backlog, re-prioritize, sharpen acceptance criteria); `/pm` executes it (act as PM for a feature, claim a user story, run tasks, tick acceptance criteria, drive git-worktree-per-story, delegate to worker agents, log status, surface blockers). Use it for anything touching a pm/E<NNN> tree or epics/features/stories/tasks-kept-as-files: \"scaffold the PM tree\", \"groom the backlog\", \"act as pm for F1xxx\", \"claim a story\", \"tick the checkboxes\". Not for generic or agile project planning, personal to-do lists, status reports, external PM tools (Jira/Trello/Linear), or code scaffolding (`npm init`, app generators)."
+license: MIT
+metadata:
+  version: "0.1.3"
+  source: https://github.com/chrishuffman5/pm
+  homepage: https://chrishuffman5.github.io/pm/
+  author: Christopher Huffman
 ---
+
+<!--
+  Provenance: this skill is part of the `pm` plugin — https://github.com/chrishuffman5/pm
+  Check `metadata.version` above against the latest release
+  (https://github.com/chrishuffman5/pm/releases) to see if your copy is current.
+  Update via:  claude plugin update pm@pm     (or re-copy skills/pm/ from the repo)
+-->
+
 
 # pm — Working a PM tree (scaffold · refine · execute)
 

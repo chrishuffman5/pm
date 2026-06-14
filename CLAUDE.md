@@ -55,7 +55,15 @@ Every epic/feature/story `CLAUDE.md` carries a `## Status log` — one timestamp
 
 Deployment is a GitHub release of this repo — `marketplace.json`'s `source.url` points at `github.com/chrishuffman5/pm.git`, and users install via `claude plugin marketplace add chrishuffman5/pm` + `claude plugin install pm@pm`.
 
-The one non-obvious rule: **the version appears in two files and they must match.** When cutting a release, bump `version` in BOTH `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (the `plugins[0].version` field) in the same commit. A mismatch makes the marketplace advertise a version the installed manifest disagrees with.
+The one non-obvious rule: **the version appears in THREE files and they must match the release tag.** When cutting a release, bump `version` in all of:
+- `.claude-plugin/plugin.json` → `version`
+- `.claude-plugin/marketplace.json` → `plugins[0].version`
+- `skills/pm/SKILL.md` → `metadata.version` (embedded so a copied-around SKILL.md is self-describing — a user can diff their `metadata.version` against the latest release to know if they're current)
+
+in the same commit, then tag `vX.Y.Z`. A mismatch makes the marketplace advertise a version the installed manifest disagrees with, or a stale SKILL.md lie about its provenance. Quick check before tagging:
+```bash
+grep -h '"version"' .claude-plugin/*.json; grep 'version:' skills/pm/SKILL.md
+```
 
 Plugin/skill changes only take effect in the user's **next** Claude Code session, never the running one.
 
