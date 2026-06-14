@@ -74,7 +74,7 @@ The tree ships a static HTML mirror generated from the `CLAUDE.md` files. The tw
 
 `set-status.ps1` is what later agents call to move a node's status — it rewrites `Status:`, stamps the timestamped `## Status log` entry, bumps `Last updated:`, and regenerates the HTML in one atomic call (`pwsh -NoProfile -File pm/set-status.ps1 -Path <node>/CLAUDE.md -Status "In progress"`). Installing it now is what makes that workflow available downstream.
 
-`-ProjectName` brands every page; `-Lede` is the portfolio subtitle. The generator parses each `CLAUDE.md`'s `Status:` and acceptance-criteria checkboxes to compute rollups, so the tracker is only as accurate as the files. `CLAUDE.md` is the single source of truth — never hand-edit the generated `.html`. For the structure and a real example to model output on, see the "HTML tracker" section of `references/tree-structure.md` (`C:\Users\chris\Github\winnie\pm` is a complete reference tree).
+`-ProjectName` brands every page; `-Lede` is the portfolio subtitle. Pass them on this first generate — the generator saves them to `pm/.pmconfig.json`, so every later regen (including `set-status.ps1`'s) keeps the branding instead of falling back to the repo folder name. The generator parses each `CLAUDE.md`'s `Status:` and acceptance-criteria checkboxes to compute rollups, so the tracker is only as accurate as the files. `CLAUDE.md` is the single source of truth — never hand-edit the generated `.html`. For the structure and a real example to model output on, see the "HTML tracker" section of `references/tree-structure.md` (`C:\Users\chris\Github\winnie\pm` is a complete reference tree).
 
 ## Verify the tree
 

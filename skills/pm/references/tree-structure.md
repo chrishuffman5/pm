@@ -12,6 +12,7 @@ A PM tree lives under `pm/` at the repo root — fully self-contained: the roadm
     ├── PLAN.md                           ← cross-feature roadmap: feature catalog + phase/dependency graph (rendered into index.html)
     ├── build-pm-html.ps1                 ← HTML tracker generator (`pm init` installs this)
     ├── set-status.ps1                    ← status-change helper (`pm init` installs this)
+    ├── .pmconfig.json                    ← saved ProjectName/Lede so regen keeps branding
     ├── index.html                        ← portfolio dashboard (generated; embeds PLAN.md)
     └── E100/                             ← Epic
         ├── CLAUDE.md                     ← epic charter (templates + numbering + working agreement live here)
@@ -189,7 +190,7 @@ Run it after scaffolding and any time a `CLAUDE.md` changes:
 ```
 pwsh -NoProfile -File pm/build-pm-html.ps1 -Path <repo>/pm -ProjectName "<Project>" -Lede "<one-line tagline>"
 ```
-`-ProjectName` sets the brand/title shown across all pages; `-Lede` sets the portfolio subtitle. Both fall back sensibly (repo folder name / generic tagline) if omitted.
+`-ProjectName` sets the brand/title shown across all pages; `-Lede` sets the portfolio subtitle. Pass them once and they're saved to `pm/.pmconfig.json`; thereafter every regeneration that omits them — including `set-status.ps1`'s automatic regen — reads the sidecar and keeps your branding. Precedence: explicit flag > `pm/.pmconfig.json` > repo folder name / generic tagline. (Commit `.pmconfig.json` so the branding travels with the tree.)
 
 Every page footer carries a link back to the repository so a visitor on a published GitHub Pages site can jump to the README and plugin-install instructions. The URL is auto-detected from `git remote origin` (SSH/HTTPS remotes are normalized to an `https://…` URL); pass `-RepoUrl <url>` to override, or it's omitted when there's no remote.
 

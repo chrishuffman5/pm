@@ -21,13 +21,14 @@
   when it does, else errors.
 
 .PARAMETER ProjectName
-  Brand shown in the topbar, page <title>, footer, and portfolio hero heading. If omitted,
-  defaults to the name of the repo folder that contains the pm root (e.g. "winnie" for
-  C:\repo\winnie\pm).
+  Brand shown in the topbar, page <title>, footer, and portfolio hero heading. Precedence:
+  this parameter > the pm/.pmconfig.json sidecar > the repo folder name (e.g. "winnie" for
+  C:\repo\winnie\pm). When you pass it explicitly it is saved to pm/.pmconfig.json so later
+  regenerations that pass no branding — including set-status.ps1's automatic regen — keep it.
 
 .PARAMETER Lede
-  One-line subtitle shown under the portfolio heading on index.html. If omitted, a generic
-  tagline is used.
+  One-line subtitle shown under the portfolio heading on index.html. Same precedence and
+  persistence as -ProjectName (param > pm/.pmconfig.json > a generic tagline).
 
 .PARAMETER RepoUrl
   Repository URL linked in every page footer, so a visitor on the published GitHub Pages site
@@ -86,13 +87,32 @@ else { $RepoUrl = ConvertTo-WebRepoUrl $RepoUrl }
 # Display label: the owner/repo path (host-agnostic), falling back to the bare URL.
 $RepoLabel = if ($RepoUrl -match '^https?://[^/]+/(.+)$') { $Matches[1] } else { $RepoUrl }
 
-# Project branding: default to the repo folder name (parent of the pm root) and a generic lede.
+# Project branding. Precedence: explicit -ProjectName/-Lede > the pm/.pmconfig.json sidecar >
+# auto-default (repo folder name / generic lede). The sidecar is what makes branding stick: when
+# you generate once with -ProjectName/-Lede they're saved there, so later regenerations that pass
+# no branding — notably set-status.ps1's automatic regen — keep the chosen name and tagline instead
+# of resetting to the folder name.
+$cfgPath = Join-Path $pmDir '.pmconfig.json'
+$explicitName = $PSBoundParameters.ContainsKey('ProjectName') -and $ProjectName
+$explicitLede = $PSBoundParameters.ContainsKey('Lede') -and $Lede
+$cfg = $null
+if (Test-Path -LiteralPath $cfgPath) {
+    try { $cfg = Get-Content -LiteralPath $cfgPath -Raw -Encoding utf8 | ConvertFrom-Json } catch { $cfg = $null }
+}
+if (-not $ProjectName -and $cfg -and $cfg.ProjectName) { $ProjectName = [string]$cfg.ProjectName }
+if (-not $Lede -and $cfg -and $cfg.Lede) { $Lede = [string]$cfg.Lede }
 if (-not $ProjectName) {
     $parent = Split-Path -Parent $pmDir
     $ProjectName = if ($parent) { Split-Path -Leaf $parent } else { 'pm' }
 }
 if (-not $Lede) {
     $Lede = 'Live progress across every epic, feature, and user story &mdash; rendered straight from the CLAUDE.md tree.'
+}
+# Persist explicit choices so future no-arg regenerations keep them.
+if ($explicitName -or $explicitLede) {
+    $out = ([pscustomobject]@{ ProjectName = $ProjectName; Lede = $Lede } | ConvertTo-Json)
+    $prev = if (Test-Path -LiteralPath $cfgPath) { Get-Content -LiteralPath $cfgPath -Raw -Encoding utf8 } else { '' }
+    if ($prev.Trim() -ne $out.Trim()) { [System.IO.File]::WriteAllText($cfgPath, $out, [System.Text.UTF8Encoding]::new($false)) }
 }
 
 # ---------------------------------------------------------------------------
