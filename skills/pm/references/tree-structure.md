@@ -86,7 +86,7 @@ The metadata lines (`**Status:**`, `**Depends on:**`, etc.) are parsed by the HT
 # US1xxxx — <title>
 **Feature:** F1xxx
 **Status:** Not started | In progress | Done
-**Model:** claude-sonnet-4-6 | claude-opus-4-8
+**Model:** claude-sonnet-5-5 | claude-opus-5-5 | claude-fable-5-1
 **Depends on:** US1xxxx, US1xxxx       (other story IDs, or "none")
 **Last updated:** YYYY-MM-DD
 
@@ -133,11 +133,19 @@ The `**Model:**` line is what the `pm` skill reads when it spawns the Worker for
 - …
 ```
 
-Task `Effort:` (S/M/L) is the per-task complexity signal that informs the story-level `Model:` choice — a story full of L tasks is a strong hint to run it on Opus.
+Task `Effort:` (S/M/L) is the per-task complexity signal that informs the story-level `Model:` choice — a story full of L tasks is a strong hint to run it on Opus (or, if it also meets the Fable criteria below, on Fable).
 
 ## Model assignment (story-level)
 
-Every story carries a `**Model:**` line. Default to **`claude-sonnet-4-6`** — it handles the bulk of well-specified implementation work efficiently. Bump a story to **`claude-opus-4-8`** when it has any of:
+Every story carries a `**Model:**` line naming one of three tiers:
+
+| Tier | Model ID | Relative cost (per token) | Use for |
+|---|---|---|---|
+| Default | `claude-sonnet-5-5` | 1× | Well-specified implementation work — the bulk of the tree |
+| Step up | `claude-opus-5-5` | 2× | Stories that need real judgment (criteria below) |
+| Reserve | `claude-fable-5-1` | 5× | The rare story where a wrong call is expensive to unwind and Opus-level reasoning leaves too little margin |
+
+Default to **`claude-sonnet-5-5`** — it handles the bulk of well-specified implementation work efficiently. Bump a story to **`claude-opus-5-5`** when it has any of:
 
 - **Architectural decisions** — choosing a schema, designing an interface other features depend on, picking an algorithm.
 - **Under-specified / ambiguous acceptance criteria** — the Worker must exercise judgment, not just execute.
@@ -145,7 +153,16 @@ Every story carries a `**Model:**` line. Default to **`claude-sonnet-4-6`** — 
 - **Cross-cutting changes** — touches many files or features, or sets a pattern others copy.
 - **Security-sensitive work** — auth, secrets, permissions, anything where a subtle mistake is expensive.
 
-When in doubt, the `Effort:` ratings of the story's tasks are a good proxy: mostly S/M → Sonnet; several L or a foundational story others depend on → Opus. The model is not load-bearing for correctness (a Sonnet story that turns out hard can be re-run on Opus), so bias toward the cheaper default and reserve Opus for stories that genuinely need the extra reasoning.
+Reserve **`claude-fable-5-1`** (Anthropic's most capable model) for stories that clear the Opus bar *and* have at least one of:
+
+- **Foundational, hard-to-reverse design** — the core domain model, tenancy/isolation boundary, or permission architecture that most of the epic builds on, where a flaw surfaces only after many downstream stories depend on it.
+- **Open-ended correctness problems** — no standard approach to copy (a novel optimization/scheduling engine, a financial or physical model whose errors compound), where the Worker must design and validate the method, not just implement a known one.
+- **Long-horizon, high-coupling scope** — several L tasks that must stay consistent with one design across many files and layers in a single sustained run.
+- **Escalation** — the story already stalled, or came back with defects that review traced to reasoning depth, on Opus.
+
+Expect zero or one Fable story per feature, and name the criterion it meets whenever you report model assignments (`pm init` / `pm plan`) so the user can sanity-check the spend. Fable turns also run longer than Opus turns.
+
+When in doubt, the `Effort:` ratings of the story's tasks are a good proxy: mostly S/M → Sonnet; several L or a foundational story others depend on → Opus; Fable only when a criterion above clearly applies. The model is not load-bearing for correctness (a story that turns out harder than expected can be re-run one tier up — Sonnet → Opus → Fable), so bias toward the cheaper tier and justify each step up.
 
 ## Status log — the timestamped history standard
 
