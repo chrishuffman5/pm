@@ -18,7 +18,7 @@ The `init` and `plan` workflows are **reference prompts** (`references/init.md`,
 
 ### The `Model:` contract
 
-Each story's `CLAUDE.md` carries a `**Model:**` line (`claude-sonnet-4-6` by default, `claude-opus-4-8` for architectural / ambiguous / algorithmic / cross-cutting / security-sensitive work). `init` mode assigns it at scaffold time, `plan` mode re-evaluates it, and `execute` mode reads it to decide which model to spawn each Worker on. Picking the model is a planning decision, not a spawn-time guess.
+Each story's `CLAUDE.md` carries a `**Model:**` line (`claude-sonnet-5-5` by default, `claude-opus-5-5` for architectural / ambiguous / algorithmic / cross-cutting / security-sensitive work, and `claude-fable-5-1` reserved for the rare foundational, hard-to-reverse, or open-ended-correctness story). `init` mode assigns it at scaffold time, `plan` mode re-evaluates it, and `execute` mode reads it to decide which model to spawn each Worker on. Picking the model is a planning decision, not a spawn-time guess.
 
 ### Status log & timestamps
 

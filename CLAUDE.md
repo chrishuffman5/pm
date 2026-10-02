@@ -41,7 +41,7 @@ The templates have **one home**: `skills/pm/references/tree-structure.md`. `init
 
 ### The `Model:` contract
 
-The story `CLAUDE.md` template carries a `**Model:**` line (`claude-sonnet-4-6` default; `claude-opus-4-8` for complex stories). It flows: **`init` assigns it → the story file stores it → `execute` reads it** to choose the model when spawning that story's Worker (the Agent tool's `model` param). `plan` re-evaluates it. If you change the field name or the heuristic, update `SKILL.md` + both reference prompts *and* the generator (`build-pm-html.ps1` parses `**Model:**` to render a chip and strips it from the body).
+The story `CLAUDE.md` template carries a `**Model:**` line (`claude-sonnet-5-5` default; `claude-opus-5-5` for complex stories; `claude-fable-5-1` reserved for foundational, hard-to-reverse, or open-ended-correctness stories). It flows: **`init` assigns it → the story file stores it → `execute` reads it** to choose the model when spawning that story's Worker (the Agent tool's `model` param). `plan` re-evaluates it. If you change the field name or the heuristic, update `SKILL.md` + both reference prompts *and* the generator (`build-pm-html.ps1` parses `**Model:**` to render a chip and strips it from the body).
 
 ### The status-log contract
 

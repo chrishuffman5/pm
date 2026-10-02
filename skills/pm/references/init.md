@@ -50,16 +50,16 @@ Don't invent domain facts to fill gaps. If a feature's scope is genuinely unclea
 
 6. Install the helper scripts and run the HTML tracker generator (see "HTML tracker" below).
 
-7. Verify (see "Verify the tree" below) and report — including which stories you put on Opus.
+7. Verify (see "Verify the tree" below) and report — including which stories you put on Opus or Fable.
 ```
 
 Scaffolding a large tree is a lot of nearly-identical file writes. That's expected — the value is in getting the *content* (scope, ACs, dependencies, model assignment) right, not in the mechanics. Work feature-by-feature so a partially-built tree is still internally consistent.
 
 ## Model assignment — call out the right model per story
 
-Each story's `**Model:**` line tells the `pm` skill which model to spawn its Worker on. Default to **`claude-sonnet-4-6`**; bump to **`claude-opus-4-8`** for stories with architectural decisions, ambiguous acceptance criteria, algorithmic/scoring logic, cross-cutting changes, or security-sensitive work. The task `Effort:` ratings are a good proxy — mostly S/M → Sonnet, several L or a foundational story → Opus. Full rationale and the heuristic are in `references/tree-structure.md`.
+Each story's `**Model:**` line tells the `pm` skill which model to spawn its Worker on. Default to **`claude-sonnet-5-5`**; bump to **`claude-opus-5-5`** for stories with architectural decisions, ambiguous acceptance criteria, algorithmic/scoring logic, cross-cutting changes, or security-sensitive work. Reserve **`claude-fable-5-1`** for the rare story that clears the Opus bar *and* is foundational and hard to reverse, an open-ended correctness problem, or long-horizon high-coupling work. The task `Effort:` ratings are a good proxy — mostly S/M → Sonnet, several L or a foundational story → Opus, Fable only when a Fable criterion clearly applies. Full rationale and the heuristic are in `references/tree-structure.md`.
 
-Bias toward the Sonnet default — the model isn't load-bearing for correctness (a story that turns out harder than expected can be re-run on Opus), so reserve Opus for stories that genuinely need the extra reasoning. **After scaffolding, list the stories you bumped to Opus** so the user can sanity-check the calls in one place.
+Bias toward the Sonnet default — the model isn't load-bearing for correctness (a story that turns out harder than expected can be re-run one tier up), so reserve Opus for stories that genuinely need the extra reasoning and Fable for the few where Opus leaves too little margin. **After scaffolding, list the stories you bumped to Opus, and each Fable story with the criterion it meets,** so the user can sanity-check the calls in one place.
 
 ## HTML tracker
 
@@ -93,7 +93,7 @@ Before reporting done, run the file-count and structural checks from `references
 2. **Summarizing the templates in the charter instead of copying them verbatim.** Later agents reconstruct files from the charter — a paraphrased template breeds drift.
 3. **Renumbering to "tidy up".** IDs are cross-referenced as dependencies. Only ever append.
 4. **Forgetting to generate the HTML after writing the tree**, leaving an empty/missing tracker that misrepresents a freshly-built plan.
-5. **Putting everything on Opus "to be safe".** That's expensive and defeats the point of per-story assignment. Default Sonnet; justify each Opus.
+5. **Putting everything on Opus (or Fable) "to be safe".** That's expensive and defeats the point of per-story assignment. Default Sonnet; justify each Opus, and each Fable twice over.
 6. **Hand-editing generated `.html`.** It's derived output; change the `CLAUDE.md` and regenerate.
 
 ## After init — the other modes

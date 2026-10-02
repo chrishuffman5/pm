@@ -69,7 +69,7 @@ pwsh -NoProfile -File pm/build-pm-html.ps1 -Path pm   # generate the initial tra
 
 ### PM (Project Manager) — owns one Feature `F1xxx`
 
-A PM is a **long-running Opus 4.8 agent** that:
+A PM is a **long-running Opus 5.5 (`claude-opus-5-5`) agent** — coordination and diff review need judgment but not Fable-level depth; the deep reasoning happens in the Workers, on each story's assigned tier. A PM:
 
 1. Reads its feature's `pm/E100/F1xxx/CLAUDE.md` in full and confirms feature-level dependencies (`Depends on:`) are `Done`.
 2. Iterates through its stories in dependency-respecting order. For each story:
@@ -132,8 +132,10 @@ Assumptions:
    a. Pick the next story whose Depends on: lines are all Done.
    b. Create the worktree + branch (references/worktree.md).
    c. Read the story's **Model:** line and spawn the Worker on that model — pass it as the
-      Agent tool's `model` parameter (e.g. claude-sonnet-4-6 or claude-opus-4-8). If the story
-      has no Model: line, default to claude-sonnet-4-6. The model is chosen per story at plan
+      Agent tool's `model` parameter. Claude Code's Agent tool takes the family alias, so map
+      claude-sonnet-5-5 → `sonnet`, claude-opus-5-5 → `opus`, claude-fable-5-1 → `fable`
+      (and any older Sonnet/Opus ID on a not-yet-done story to the same family alias). If the
+      story has no Model: line, default to claude-sonnet-5-5. The model is chosen per story at plan
       time (`pm init` or `pm plan`) precisely so the PM doesn't have to judge complexity at spawn
       time — honor it. Spawn via the Agent tool (or SendMessage if continuing a named worker).
       The brief MUST include:
