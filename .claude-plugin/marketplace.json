@@ -9,7 +9,7 @@
     {
       "name": "pm",
       "description": "A single pm skill for working a Rally-style PM tree (Epic → Feature → User Story → Task) in three modes: `/pm` executes a tree with a team of PM/Worker agents, `/pm init` scaffolds one, and `/pm plan` refines it — git-worktree-per-story parallelism, per-story model assignment, timestamped status logs, and a generated HTML tracker.",
-      "version": "0.1.3",
+      "version": "0.2.0",
       "source": {
         "source": "url",
         "url": "https://github.com/chrishuffman5/pm.git"
